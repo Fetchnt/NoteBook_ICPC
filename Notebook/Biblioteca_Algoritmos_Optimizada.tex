@@ -1,0 +1,3737 @@
+\documentclass[10pt,twocolumn,letterpaper]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,provide=*]{babel} % provide=* evita el error "spanish.ldf not found" en TeX Live nuevo
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb} % Necesario para simbolos como \lesssim, \gtrsim, etc.
+\usepackage{titlesec}
+\usepackage{hyperref} % Debe ir casi al final de los usepackage
+% Configuracion de hyperref: enlaces clicables en el indice y referencias cruzadas,
+% sin cuadros de colores feos alrededor del texto (solo aplica al PDF exportado)
+\hypersetup{
+    colorlinks=true,      % colorea el texto en vez de poner un recuadro
+    linkcolor=black,      % color de los enlaces internos (indice, secciones)
+    citecolor=black,
+    urlcolor=blue,
+    linktoc=all,          % hace clicable tanto el numero de capitulo como el titulo
+    bookmarksopen=true,   % el panel de marcadores del PDF empieza expandido
+    bookmarksnumbered=true
+}
+% Configuracion de pagina estilo ICPC Notebook (Margenes minimos para ahorrar espacio)
+\geometry{letterpaper, margin=0.5in, top=0.75in, bottom=0.5in}
+\setlength{\columnsep}{0.25in}
+\setlength{\columnseprule}{0.4pt}
+% Formato compacto para capitulos (estilo manual/libro de referencia)
+\titleformat{\chapter}[hang]{\normalfont\huge\bfseries}{\thechapter. }{0pt}{\huge}
+\titlespacing*{\chapter}{0pt}{-20pt}{10pt}
+% Paleta de colores para bloques de codigo
+\definecolor{codegreen}{rgb}{0,0.5,0}
+\definecolor{codegray}{rgb}{0.4,0.4,0.4}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolor}{rgb}{0.98,0.98,0.95}
+% Configuracion de listings para codigo fuente en C++
+\lstset{
+    backgroundcolor=\color{backcolor},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\scriptsize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    language=C++,
+    literate={
+      {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+      {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+      {ñ}{{\~n}}1 {Ñ}{{\~N}}1 {ü}{{\"u}}1 {Ü}{{\"U}}1 {ö}{{\"o}}1
+      {¿}{{?`}}1 {¡}{{!`}}1 {≡}{{$\equiv$}}1 {—}{{--}}1
+    }
+}
+% Encabezado y pie de pagina del libro
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\bfseries EroMergeSort -- ICPC Reference Manual}
+\chead{}
+\rhead{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\begin{document}
+% =========================================================================
+% PORTADA Y CONFIGURACIÓN INICIAL
+% =========================================================================
+\title{\vspace{-0.5in}\Huge \bfseries EroMergeSort Team Notebook \\ \Large Manual de Referencia Completo (C++)}
+\author{\large }
+\maketitle
+\thispagestyle{fancy}
+\tableofcontents
+\newpage
+% =========================================================================
+\chapter{Plantillas Base y Optimización I/O}
+% =========================================================================
+\section{Configuración Inicial (Template C++)}
+Estructura inicial limpia con macros habituales para acelerar la escritura de código durante los concursos.
+\begin{lstlisting}
+#include <bits/stdc++.h>
+using namespace std;
+#define fastio ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+#define pb push_back
+#define all(v) v.begin(), v.end()
+typedef long long ll;
+typedef pair<int, int> pii;
+int main() {
+    fastio;
+    // Tu codigo aqui
+    return 0;
+}
+\end{lstlisting}
+\section{Lectura Eficiente (Fast I/O)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(1)$ por operación de lectura amortizada. \\
+Desactiva la sincronización pesada de flujos heredada de C y desvincula \texttt{cin} de \texttt{cout} para agilizar lecturas masivas. **No mezclar con \texttt{scanf/printf} ni usar \texttt{endl}.**
+\begin{lstlisting}
+// Incluir inmediatamente al inicio del main
+ios_base::sync_with_stdio(false);
+cin.tie(NULL);
+\end{lstlisting}
+\subsubsection{Patrones de Entrada Comunes}
+\begin{lstlisting}
+void lectura_ejemplos() {
+    int n; double d; char c;
+    cin >> n >> d >> c; // Variables basicas
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) cin >> arr[i]; // Carga de vectores
+    string nombre;
+    cin.ignore(); // Limpiar salto de linea remanente del bufer
+    getline(cin, nombre); // Lineas completas con espacios
+    int x;
+    while (cin >> x) { /* Leer hasta Fin de Archivo (EOF) */ }
+}
+\end{lstlisting}
+% =========================================================================
+\chapter{Estructuras de Datos y Búsqueda}
+% =========================================================================
+\section{Búsqueda Binaria (Algoritmo Floor)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(\log N)$ \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(1)$ \\
+Busca un valor en un rango ordenado. Si el elemento no existe, retorna de forma exacta el índice del mayor elemento inferior más cercano al buscado (\textit{floor}). Retorna $-1$ si todos son mayores.
+\begin{lstlisting}
+int binary_search_floor(const vector<int>& arr, int target) {
+    int low = 0, high = (int)arr.size() - 1;
+    int ans = -1;
+    while (low <= high) {
+        int mid = low + (high - low) / 2;
+        if (arr[mid] == target) return mid; 
+        else if (arr[mid] < target) { ans = mid; low = mid + 1; }
+        else high = mid - 1; 
+    }
+    return ans;
+}
+\end{lstlisting}
+\section{Fenwick Tree (Binary Indexed Tree)}
+\textbf{Complejidad de Tiempo:}
+\begin{itemize}
+    \item \textbf{Inicialización:} $\mathcal{O}(N)$
+    \item \textbf{Actualización puntual (Update):} $\mathcal{O}(\log N)$
+    \item \textbf{Consulta por rango (Query):} $\mathcal{O}(\log N)$
+\end{itemize}
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N)$ \\
+Estructura eficiente para consultas de sumas acumuladas dinámicas y actualizaciones puntuales en un arreglo de tamaño $N$.
+\begin{lstlisting}
+struct BIT {
+    int n; vector<int> tree;
+    BIT(int n) : n(n), tree(n + 1, 0) {}
+    void update(int i, int delta) {
+        for (; i <= n; i += i & -i) tree[i] += delta;
+    }
+    int query(int i) {
+        int sum = 0;
+        for (; i > 0; i -= i & -i) sum += tree[i];
+        return sum;
+    }
+    int query(int l, int r) { return query(r) - query(l - 1); }
+};
+\end{lstlisting}
+\section{Segment Tree (Consultas por Rangos)}
+\textbf{Complejidad de Tiempo:}
+\begin{itemize}
+    \item \textbf{Construcción:} $\mathcal{O}(N)$
+    \item \textbf{Actualización puntual (Update):} $\mathcal{O}(\log N)$
+    \item \textbf{Consulta por rango (Query):} $\mathcal{O}(\log N)$
+\end{itemize}
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N)$ (usa $2S$ nodos, donde $S$ es la siguiente potencia de 2). \\
+Estructura iterativa para consultas asociativas en intervalos dinámicos. Reduce memoria frente a la versión recursiva de $4N$ y evita llamadas recursivas. La consulta usa el intervalo semiabierto $[l,r)$.
+\begin{lstlisting}
+// Versión iterativa: usa 2*size nodos y elimina el costo de recursión.
+struct SegTree {
+    int n;
+    int size;
+    vector<int> tree;
+
+    explicit SegTree(int n) : n(n) {
+        size = 1;
+        while (size < n) size <<= 1;
+        tree.assign(2 * size, 0);
+    }
+
+    void update(int idx, int val) {
+        int p = size + idx;
+        tree[p] = val;
+        for (p >>= 1; p; p >>= 1)
+            tree[p] = tree[p << 1] + tree[p << 1 | 1];
+    }
+
+    int query(int l, int r) const { // [l, r), 0-indexado
+        int ans = 0;
+        for (l += size, r += size; l < r; l >>= 1, r >>= 1) {
+            if (l & 1) ans += tree[l++];
+            if (r & 1) ans += tree[--r];
+        }
+        return ans;
+    }
+};
+\end{lstlisting}
+\section{Segment Tree con Lazy Propagation}
+\textbf{Complejidad de Tiempo:}
+\begin{itemize}
+    \item \textbf{Construcción:} $\mathcal{O}(N)$
+    \item \textbf{Actualización por Rangos (Range Update):} $\mathcal{O}(\log N)$
+    \item \textbf{Consulta por rango (Range Query):} $\mathcal{O}(\log N)$
+\end{itemize}
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N)$ (Arreglos de tamaño $4N$). \\
+Permite modificaciones masivas con *lazy propagation*. La función \texttt{apply} actualiza directamente un nodo y su etiqueta, reduciendo operaciones repetidas de suma y propagación.
+\begin{lstlisting}
+struct SegTreeLazy {
+    int n; vector<ll> tree, lazy;
+    SegTreeLazy(int n) : n(n), tree(4 * n, 0), lazy(4 * n, 0) {}
+
+    inline void apply(int node, int start, int end, ll val) {
+        tree[node] += (end - start + 1LL) * val;
+        lazy[node] += val;
+    }
+
+    inline void push(int node, int start, int end) {
+        if (lazy[node] == 0 || start == end) return;
+        int mid = (start + end) >> 1;
+        ll val = lazy[node];
+        apply(node << 1, start, mid, val);
+        apply(node << 1 | 1, mid + 1, end, val);
+        lazy[node] = 0;
+    }
+
+    void updateRange(int node, int start, int end, int l, int r, ll val) {
+        if (r < start || end < l) return;
+        if (l <= start && end <= r) {
+            apply(node, start, end, val);
+            return;
+        }
+        push(node, start, end);
+        int mid = (start + end) >> 1;
+        updateRange(node << 1, start, mid, l, r, val);
+        updateRange(node << 1 | 1, mid + 1, end, l, r, val);
+        tree[node] = tree[node << 1] + tree[node << 1 | 1];
+    }
+
+    ll queryRange(int node, int start, int end, int l, int r) {
+        if (r < start || end < l) return 0;
+        if (l <= start && end <= r) return tree[node];
+        push(node, start, end);
+        int mid = (start + end) >> 1;
+        return queryRange(node << 1, start, mid, l, r) +
+               queryRange(node << 1 | 1, mid + 1, end, l, r);
+    }
+};
+\end{lstlisting}
+\section{Merge Sort Tree}
+\textbf{Complejidad de Tiempo:}
+\begin{itemize}
+    \item \textbf{Construcción:} $\mathcal{O}(N \log N)$
+    \item \textbf{Consulta (Query):} $\mathcal{O}(\log^2 N)$ (utilizando búsqueda binaria interna)
+\end{itemize}
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N \log N)$ (cada elemento del arreglo pertenece a $\log N$ vectores intermedios). \\
+Estructura donde cada nodo del Segment Tree almacena un vector ordenado con todos los elementos de su subrango. Útil para consultas del tipo "cuántos números menores a $K$ existen en el rango $[L, R]$".
+\begin{lstlisting}
+struct MergeSortTree {
+    int n; vector<vector<int>> tree;
+    MergeSortTree(int n) : n(n), tree(4 * n) {}
+    void build(const vector<int>& arr, int node, int start, int end) {
+        if (start == end) {
+            tree[node] = {arr[start]};
+            return;
+        }
+        int mid = (start + end) / 2;
+        build(arr, 2 * node, start, mid);
+        build(arr, 2 * node + 1, mid + 1, end);
+        
+        // Reserva exactamente el tamaño final para evitar realocaciones.
+        tree[node].resize(end - start + 1);
+        merge(tree[2 * node].begin(), tree[2 * node].end(),
+              tree[2 * node + 1].begin(), tree[2 * node + 1].end(),
+              tree[node].begin());
+    }
+    // Devuelve la cantidad de elementos estrictamente menores que K en [l, r]
+    int query(int node, int start, int end, int l, int r, int k) {
+        if (r < start || end < l) return 0;
+        if (l <= start && end <= r) {
+            return lower_bound(tree[node].begin(), tree[node].end(), k) - tree[node].begin();
+        }
+        int mid = (start + end) / 2;
+        return query(2 * node, start, mid, l, r, k) + 
+               query(2 * node + 1, mid + 1, end, l, r, k);
+    }
+};
+\end{lstlisting}
+\section{Sparse Table (RMQ Estático)}
+\textbf{Complejidad de Tiempo:}
+\begin{itemize}
+    \item \textbf{Construcción:} $\mathcal{O}(N \log N)$
+    \item \textbf{Consulta (Query):} $\mathcal{O}(1)$
+\end{itemize}
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N \log N)$, sin arreglo auxiliar de logs. \\
+Ideal para consultas de rango sobre funciones \textit{idempotentes} (min, max, gcd, AND, OR) cuando el arreglo \textbf{no cambia}. Permite responder en O(1) usando dos ventanas de potencia de dos que se solapan.
+\begin{lstlisting}
+struct SparseTable {
+    vector<vector<int>> table;
+    int n;
+    SparseTable(const vector<int>& arr) : n((int)arr.size()) {
+        int K = (n == 0 ? 0 : 32 - __builtin_clz(n));
+        table.assign(K, vector<int>(n));
+        if (n == 0) return;
+        table[0] = arr;
+        for (int j = 1; j < K; j++) {
+            int len = 1 << j;
+            for (int i = 0; i + len <= n; i++)
+                table[j][i] = min(table[j-1][i],
+                                   table[j-1][i + (len >> 1)]);
+        }
+    }
+    // Mínimo en el rango [l, r] (0-indexado, inclusivo).
+    // __builtin_clz evita almacenar un arreglo logs de tamaño N.
+    int query(int l, int r) const {
+        int len = r - l + 1;
+        int j = 31 - __builtin_clz(len);
+        return min(table[j][l], table[j][r - (1 << j) + 1]);
+    }
+};
+\end{lstlisting}
+\section{DSU con Unión por Tamaño (Rollback-Ready)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(\log N)$ por operación (sin compresión de caminos, para permitir deshacer). \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N)$ \\
+Variante de DSU que evita la compresión de caminos para poder deshacer uniones (\textit{rollback}), útil en algoritmos offline como Kruskal reconstruible o consultas persistentes de conectividad.
+\begin{lstlisting}
+struct DSURollback {
+    vector<int> parent, sz;
+    vector<pair<int,int>> history; // (nodo modificado, valor previo del parent)
+    DSURollback(int n) { parent.resize(n); sz.assign(n, 1); iota(parent.begin(), parent.end(), 0); }
+    int find(int i) { while (parent[i] != i) i = parent[i]; return i; }
+    bool unite(int i, int j) {
+        int ri = find(i), rj = find(j);
+        if (ri == rj) { history.push_back({-1, -1}); return false; }
+        if (sz[ri] < sz[rj]) swap(ri, rj);
+        history.push_back({rj, parent[rj]});
+        parent[rj] = ri; sz[ri] += sz[rj];
+        return true;
+    }
+    void rollback() {
+        auto [node, prevParent] = history.back(); history.pop_back();
+        if (node == -1) return;
+        sz[parent[node]] -= sz[node];
+        parent[node] = prevParent;
+    }
+};
+\end{lstlisting}
+\section{Trie (Árbol de Prefijos)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(L)$ por inserción/consulta, donde $L$ es la longitud de la cadena o el número de bits. \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N \cdot L)$ \\
+Estructura para almacenar conjuntos de cadenas o números binarios y responder consultas de prefijos comunes. La variante mostrada trabaja sobre bits de enteros de 30 posiciones, útil para problemas de XOR máximo.
+\begin{lstlisting}
+struct TrieXor {
+    struct Node { int child[2] = {-1, -1}; };
+    vector<Node> trie;
+    static const int BITS = 30;
+    TrieXor() { trie.push_back(Node()); }
+    void insert(int num) {
+        int cur = 0;
+        for (int i = BITS; i >= 0; i--) {
+            int b = (num >> i) & 1;
+            if (trie[cur].child[b] == -1) {
+                trie[cur].child[b] = trie.size();
+                trie.push_back(Node());
+            }
+            cur = trie[cur].child[b];
+        }
+    }
+    // Devuelve el maximo XOR posible entre 'num' y algun valor insertado
+    int maxXor(int num) {
+        int cur = 0, res = 0;
+        for (int i = BITS; i >= 0; i--) {
+            int b = (num >> i) & 1;
+            int want = 1 - b;
+            if (trie[cur].child[want] != -1) {
+                res |= (1 << i);
+                cur = trie[cur].child[want];
+            } else {
+                cur = trie[cur].child[b];
+            }
+        }
+        return res;
+    }
+};
+\end{lstlisting}
+% =========================================================================
+\chapter{Lower Bound y Upper Bound}
+% =========================================================================
+\section{Conceptos y Uso Básico en STL}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(\log N)$ sobre contenedores de acceso aleatorio (\texttt{vector}, \texttt{array}). \\
+\textbf{Requisito:} el rango debe estar \textbf{ordenado} respecto al criterio usado. \\
+\texttt{lower\_bound(first, last, val)} devuelve un iterador al \textbf{primer} elemento $\geq val$. \\
+\texttt{upper\_bound(first, last, val)} devuelve un iterador al \textbf{primer} elemento $> val$. \\
+Ambos devuelven \texttt{last} si no existe tal elemento. La diferencia entre ambos resultados da la cantidad de ocurrencias exactas de \texttt{val}.
+\begin{lstlisting}
+vector<int> v = {1, 3, 3, 3, 5, 7, 9};
+auto lb = lower_bound(v.begin(), v.end(), 3); // apunta al primer 3 (indice 1)
+auto ub = upper_bound(v.begin(), v.end(), 3); // apunta al primer >3 (indice 4, valor 5)
+int idx_lb = lb - v.begin();  // 1
+int idx_ub = ub - v.begin();  // 4
+int cantidad_de_3 = ub - lb;  // 3
+bool existe = (lb != v.end() && *lb == 3); // forma estandar de checar existencia
+\end{lstlisting}
+\subsubsection{Patrones Adaptativos Rápidos}
+Snippets listos para pegar y adaptar según lo que se necesite consultar:
+\begin{lstlisting}
+// Contar cuantos elementos son <= x
+int cnt_le(vector<int>& v, int x) { return upper_bound(v.begin(), v.end(), x) - v.begin(); }
+// Contar cuantos elementos son < x
+int cnt_lt(vector<int>& v, int x) { return lower_bound(v.begin(), v.end(), x) - v.begin(); }
+// Contar cuantos elementos son >= x
+int cnt_ge(vector<int>& v, int x) { return v.end() - lower_bound(v.begin(), v.end(), x); }
+// Contar cuantos elementos son > x
+int cnt_gt(vector<int>& v, int x) { return v.end() - upper_bound(v.begin(), v.end(), x); }
+// Contar cuantos elementos hay en el rango [lo, hi]
+int cnt_range(vector<int>& v, int lo, int hi) {
+    return upper_bound(v.begin(), v.end(), hi) - lower_bound(v.begin(), v.end(), lo);
+}
+// Mayor elemento <= x (floor). Retorna -1 si no existe
+int floor_val(vector<int>& v, int x) {
+    auto it = upper_bound(v.begin(), v.end(), x);
+    if (it == v.begin()) return -1;
+    return *prev(it);
+}
+// Menor elemento >= x (ceil). Retorna -1 si no existe
+int ceil_val(vector<int>& v, int x) {
+    auto it = lower_bound(v.begin(), v.end(), x);
+    if (it == v.end()) return -1;
+    return *it;
+}
+\end{lstlisting}
+\section{Búsqueda con Comparador Personalizado}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(\log N)$ \\
+Cuando el contenedor guarda \texttt{pair}, \texttt{struct} u otro tipo compuesto, se busca por un campo específico pasando un comparador (lambda) como cuarto argumento. \textbf{Importante:} el comparador debe seguir el mismo orden estricto usado al ordenar el contenedor.
+\begin{lstlisting}
+struct Persona { int edad; string nombre; };
+vector<Persona> gente = { {18,"Ana"}, {20,"Luis"}, {20,"Eva"}, {25,"Tom"} };
+// gente esta ordenado por 'edad'
+// Buscar primera persona con edad >= 20 (comparando 'val' contra el campo del struct)
+auto it = lower_bound(gente.begin(), gente.end(), 20,
+    [](const Persona& p, int val) { return p.edad < val; });
+// Buscar primera persona con edad > 20
+auto it2 = upper_bound(gente.begin(), gente.end(), 20,
+    [](int val, const Persona& p) { return val < p.edad; });
+// Sirve igual con vector<pair<int,int>> ordenado por 'first'
+vector<pair<int,int>> vp = {{1,5},{3,8},{3,2},{7,1}};
+auto it3 = lower_bound(vp.begin(), vp.end(), make_pair(3, INT_MIN));
+\end{lstlisting}
+\section{lower\_bound / upper\_bound en \texttt{set} y \texttt{multiset}}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(\log N)$ usando el método miembro (\textbf{NO} usar la función libre \texttt{std::lower\_bound} sobre estos contenedores: al no tener iteradores de acceso aleatorio, degrada a $\mathcal{O}(N)$). \\
+\texttt{set}/\texttt{multiset} ya están ordenados internamente; siempre se debe llamar al \textbf{método miembro} \texttt{.lower\_bound()} / \texttt{.upper\_bound()} para mantener eficiencia.
+\begin{lstlisting}
+multiset<int> ms = {1, 3, 3, 5, 7};
+auto it = ms.lower_bound(3); // O(log N), correcto
+// auto it_malo = lower_bound(ms.begin(), ms.end(), 3); // O(N), EVITAR
+// Predecesor y sucesor de x (aunque x no este en el set)
+int predecesor(multiset<int>& s, int x) {
+    auto it = s.lower_bound(x);
+    if (it == s.begin()) return INT_MIN; // no hay predecesor
+    return *prev(it);
+}
+int sucesor(multiset<int>& s, int x) {
+    auto it = s.upper_bound(x);
+    if (it == s.end()) return INT_MAX; // no hay sucesor
+    return *it;
+}
+// Eliminar SOLO una ocurrencia de x en un multiset (erase(x) borra TODAS)
+auto itDel = ms.find(3);
+if (itDel != ms.end()) ms.erase(itDel);
+\end{lstlisting}
+\section{Búsqueda Binaria Genérica sobre Predicado (Adaptativa)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(\log N \cdot f)$, donde $f$ es el costo de evaluar el predicado (\textit{check}). \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(1)$ \\
+Esta plantilla es la más \textbf{reutilizable} en competencia: sirve para cualquier situación monótona (no solo arreglos ordenados), como \textit{binary search on answer}. Solo se debe definir la función \texttt{check(x)} que sea \texttt{true} para todo $x \geq$ respuesta y \texttt{false} antes de ella (patrón \texttt{FFFF...TTTT}).
+\begin{lstlisting}
+// Encuentra el menor x en [lo, hi] tal que check(x) == true
+// (asume que check es monotona: false,false,...,false,true,true,...,true)
+template <typename T, typename F>
+T binary_search_first_true(T lo, T hi, F check) {
+    T ans = hi + 1; // valor centinela si nunca se cumple
+    while (lo <= hi) {
+        T mid = lo + (hi - lo) / 2;
+        if (check(mid)) { ans = mid; hi = mid - 1; }
+        else lo = mid + 1;
+    }
+    return ans;
+}
+// Ejemplo de uso: menor capacidad de barco para repartir paquetes en D dias
+// bool check(int capacidad) { ... simula si alcanza con esa capacidad ... }
+// int resp = binary_search_first_true(minCap, maxCap, check);
+// Variante para punto flotante (numero fijo de iteraciones en vez de lo<=hi)
+template <typename F>
+double binary_search_real(double lo, double hi, F check, int iters = 100) {
+    for (int i = 0; i < iters; i++) {
+        double mid = (lo + hi) / 2;
+        if (check(mid)) hi = mid; else lo = mid;
+    }
+    return lo;
+}
+\end{lstlisting}
+\section{Implementación Manual (Referencia Interna)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(\log N)$ \\
+Útil para entender qué hace la STL por dentro, o para adaptarla a estructuras sin iteradores estándar (ej. arreglos con índices \textit{custom}, matrices implícitas, respuestas indexadas por función).
+\begin{lstlisting}
+// Version manual de lower_bound: primer indice con arr[i] >= target
+int my_lower_bound(const vector<int>& arr, int target) {
+    int lo = 0, hi = (int)arr.size(); // hi = size (no size-1): rango [lo, hi)
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (arr[mid] < target) lo = mid + 1;
+        else hi = mid;
+    }
+    return lo; // si lo == arr.size(), no existe tal elemento
+}
+// Version manual de upper_bound: primer indice con arr[i] > target
+int my_upper_bound(const vector<int>& arr, int target) {
+    int lo = 0, hi = (int)arr.size();
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (arr[mid] <= target) lo = mid + 1;
+        else hi = mid;
+    }
+    return lo;
+}
+\end{lstlisting}
+% =========================================================================
+\chapter{Algoritmos de Grafos}
+% =========================================================================
+
+% -------------------------------------------------------------------------
+\section{Tabla de Decisión Rápida}
+% -------------------------------------------------------------------------
+Antes de programar, ubica el problema en esta tabla. Ahorra minutos valiosos en el momento del concurso.
+
+\begin{center}
+\scriptsize
+\begin{tabular}{|p{3.1cm}|p{3.3cm}|}
+\hline
+\textbf{Pista en el enunciado} & \textbf{Algoritmo} \\
+\hline
+Menor cantidad de pasos/aristas, sin pesos & BFS \\
+\hline
+Pesos todos iguales a 1 o dos valores fijos & BFS 0/1 (deque) \\
+\hline
+Varios orígenes simultáneos & BFS multi-fuente \\
+\hline
+Camino mínimo con pesos $\geq 0$ & Dijkstra \\
+\hline
+Camino mínimo con pesos negativos & Bellman-Ford \\
+\hline
+Todos los pares de distancias, $V \lesssim 500$ & Floyd-Warshall \\
+\hline
+¿Se puede llegar de A a B? & DFS o BFS \\
+\hline
+Contar componentes conexas / islas en grid & DFS o BFS desde cada no visitado \\
+\hline
+¿Es bipartito? / 2 colores & BFS/DFS coloreando \\
+\hline
+Orden de tareas con dependencias & Topological Sort (Kahn o DFS) \\
+\hline
+Detectar ciclo & DFS (colores) o Kahn \\
+\hline
+Árbol de conexión de costo mínimo & Kruskal o Prim \\
+\hline
+Componentes fuertemente conexas (dirigido) & Tarjan / Kosaraju \\
+\hline
+Nodo/arista crítica que desconecta el grafo & Puentes y Puntos de Articulación \\
+\hline
+Ancestro común de dos nodos en árbol & LCA (Binary Lifting) \\
+\hline
+Satisfacibilidad de restricciones OR con 2 opciones & 2-SAT \\
+\hline
+Flujo máximo / corte mínimo & Edmonds-Karp \\
+\hline
+Grid/matriz con movimientos (arriba/abajo/izq/der) & Grafo implícito: BFS/DFS sobre celdas \\
+\hline
+\end{tabular}
+\end{center}
+
+% -------------------------------------------------------------------------
+\section{Plantilla Universal de Grafo}
+% -------------------------------------------------------------------------
+Copiar y pegar según lo que se necesite. Usar SIEMPRE la misma variable \texttt{adj} en toda la solución para no confundirse a mitad de la competencia.
+\begin{lstlisting}
+int n, m; // nodos y aristas
+vector<vector<int>> adj;              // grafo NO ponderado
+vector<vector<pair<int,int>>> adjW;   // grafo ponderado: {vecino, peso}
+
+void leerGrafoNoDirigido(bool ponderado) {
+    cin >> n >> m;
+    adj.assign(n + 1, {});
+    adjW.assign(n + 1, {});
+    for (int i = 0; i < m; i++) {
+        int u, v; cin >> u >> v;
+        if (ponderado) {
+            int w; cin >> w;
+            adjW[u].push_back({v, w});
+            adjW[v].push_back({u, w});
+        } else {
+            adj[u].push_back(v);
+            adj[v].push_back(u); // quitar esta linea si es dirigido
+        }
+    }
+}
+// IMPORTANTE (multi-test): siempre limpiar/reasignar adj y adjW entre casos de prueba.
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{BFS (Búsqueda en Anchura)}
+% -------------------------------------------------------------------------
+\textbf{Complejidad:} $\mathcal{O}(V + E)$ tiempo, $\mathcal{O}(V)$ espacio. \\
+Garantiza la distancia mínima en aristas cuando todos los pesos son 1 (o no hay pesos).
+\begin{lstlisting}
+vector<int> dist_, parent_;
+void bfs(int start, int n, vector<vector<int>>& adj) {
+    dist_.assign(n + 1, -1);
+    parent_.assign(n + 1, -1);
+    queue<int> q;
+    dist_[start] = 0;
+    q.push(start);
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v : adj[u]) {
+            if (dist_[v] == -1) {
+                dist_[v] = dist_[u] + 1;
+                parent_[v] = u;
+                q.push(v);
+            }
+        }
+    }
+}
+// Reconstruir camino start -> target (vacio si no hay camino)
+vector<int> reconstruirCamino(int target) {
+    if (dist_[target] == -1) return {};
+    vector<int> camino;
+    for (int v = target; v != -1; v = parent_[v]) camino.push_back(v);
+    reverse(camino.begin(), camino.end());
+    return camino;
+}
+\end{lstlisting}
+
+\subsection{BFS Multi-Fuente}
+Útil cuando hay varios orígenes que "expanden" simultáneamente (ej. varias fuentes de fuego, virus, etc.). Basta con meter todos los orígenes a la cola desde el inicio con distancia 0.
+\begin{lstlisting}
+vector<int> bfsMultiFuente(int n, vector<vector<int>>& adj, vector<int>& fuentes) {
+    vector<int> dist(n + 1, -1);
+    queue<int> q;
+    for (int s : fuentes) { dist[s] = 0; q.push(s); }
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v : adj[u]) {
+            if (dist[v] == -1) { dist[v] = dist[u] + 1; q.push(v); }
+        }
+    }
+    return dist;
+}
+\end{lstlisting}
+
+\subsection{BFS 0/1 (Deque)}
+\textbf{Complejidad:} $\mathcal{O}(V + E)$ \\
+Cuando las aristas solo tienen peso 0 o 1 (o dos valores fijos), es más rápido que Dijkstra y evita la cola de prioridad. Aristas de peso 0 se insertan al frente del deque, las de peso 1 al final.
+\begin{lstlisting}
+vector<int> bfs01(int start, int n, vector<vector<pair<int,int>>>& adjW) {
+    vector<int> dist(n + 1, INT_MAX);
+    deque<int> dq;
+    dist[start] = 0;
+    dq.push_back(start);
+    while (!dq.empty()) {
+        int u = dq.front(); dq.pop_front();
+        for (auto [v, w] : adjW[u]) { // w debe ser 0 o 1
+            if (dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                if (w == 0) dq.push_front(v);
+                else dq.push_back(v);
+            }
+        }
+    }
+    return dist;
+}
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{DFS (Búsqueda en Profundidad)}
+% -------------------------------------------------------------------------
+\textbf{Complejidad:} $\mathcal{O}(V + E)$ tiempo, $\mathcal{O}(V)$ espacio. \\
+\textbf{Cuidado:} con $n \gtrsim 10^5$ y grafos tipo "cadena", la version recursiva puede tronar por stack overflow. Usar la version iterativa en ese caso.
+\begin{lstlisting}
+vector<bool> visitado;
+void dfs(int u, vector<vector<int>>& adj) {
+    visitado[u] = true;
+    // procesar u aqui
+    for (int v : adj[u]) {
+        if (!visitado[v]) dfs(v, adj);
+    }
+}
+\end{lstlisting}
+
+\subsection{DFS Iterativo (evita stack overflow)}
+\begin{lstlisting}
+void dfsIterativo(int start, int n, vector<vector<int>>& adj) {
+    vector<bool> visitado(n + 1, false);
+    stack<int> st;
+    st.push(start);
+    while (!st.empty()) {
+        int u = st.top(); st.pop();
+        if (visitado[u]) continue;
+        visitado[u] = true;
+        // procesar u aqui
+        for (int v : adj[u]) {
+            if (!visitado[v]) st.push(v);
+        }
+    }
+}
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{Componentes Conexas y Grafos Bipartitos}
+% -------------------------------------------------------------------------
+\textbf{Complejidad:} $\mathcal{O}(V + E)$
+\begin{lstlisting}
+// Cuenta componentes conexas y asigna a cada nodo su id de componente
+int contarComponentes(int n, vector<vector<int>>& adj, vector<int>& compId) {
+    compId.assign(n + 1, -1);
+    int comp = 0;
+    for (int i = 1; i <= n; i++) {
+        if (compId[i] != -1) continue;
+        queue<int> q; q.push(i); compId[i] = comp;
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            for (int v : adj[u]) {
+                if (compId[v] == -1) { compId[v] = comp; q.push(v); }
+            }
+        }
+        comp++;
+    }
+    return comp;
+}
+// Determina si el grafo es bipartito (coloreable con 2 colores)
+bool esBipartito(int n, vector<vector<int>>& adj) {
+    vector<int> color(n + 1, -1);
+    for (int i = 1; i <= n; i++) {
+        if (color[i] != -1) continue;
+        queue<int> q; q.push(i); color[i] = 0;
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            for (int v : adj[u]) {
+                if (color[v] == -1) { color[v] = 1 - color[u]; q.push(v); }
+                else if (color[v] == color[u]) return false;
+            }
+        }
+    }
+    return true;
+}
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{Detección de Ciclos}
+% -------------------------------------------------------------------------
+\textbf{Complejidad:} $\mathcal{O}(V + E)$
+
+\subsection{Grafo NO Dirigido}
+Se compara con el padre para no contar la misma arista dos veces.
+\begin{lstlisting}
+vector<bool> visitado;
+bool cicloNoDirigido(int u, int padre, vector<vector<int>>& adj) {
+    visitado[u] = true;
+    for (int v : adj[u]) {
+        if (!visitado[v]) {
+            if (cicloNoDirigido(v, u, adj)) return true;
+        } else if (v != padre) {
+            return true;
+        }
+    }
+    return false;
+}
+bool tieneCicloNoDirigido(int n, vector<vector<int>>& adj) {
+    visitado.assign(n + 1, false);
+    for (int i = 1; i <= n; i++)
+        if (!visitado[i] && cicloNoDirigido(i, -1, adj)) return true;
+    return false;
+}
+\end{lstlisting}
+
+\subsection{Grafo Dirigido (3 colores)}
+Un ciclo existe solo si se llega a un nodo que sigue "en la pila de recursión" (gris), no uno ya terminado (negro).
+\begin{lstlisting}
+// 0 = blanco, 1 = gris (en el camino actual), 2 = negro (terminado)
+vector<int> color_;
+bool cicloDirigido(int u, vector<vector<int>>& adj) {
+    color_[u] = 1;
+    for (int v : adj[u]) {
+        if (color_[v] == 1) return true;
+        if (color_[v] == 0 && cicloDirigido(v, adj)) return true;
+    }
+    color_[u] = 2;
+    return false;
+}
+bool tieneCicloDirigido(int n, vector<vector<int>>& adj) {
+    color_.assign(n + 1, 0);
+    for (int i = 1; i <= n; i++)
+        if (color_[i] == 0 && cicloDirigido(i, adj)) return true;
+    return false;
+}
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{Ordenamiento Topológico}
+% -------------------------------------------------------------------------
+Solo aplica a DAGs (grafos dirigidos acíclicos).
+
+\subsection{Kahn (BFS) --- Recomendado}
+\textbf{Complejidad:} $\mathcal{O}(V + E)$ \\
+Ventaja: detecta ciclos automáticamente (si \texttt{orden.size() != n}, no es DAG).
+\begin{lstlisting}
+vector<int> topoSortKahn(int n, vector<vector<int>>& adj) {
+    vector<int> indeg(n + 1, 0);
+    for (int u = 1; u <= n; u++) for (int v : adj[u]) indeg[v]++;
+    queue<int> q;
+    for (int i = 1; i <= n; i++) if (indeg[i] == 0) q.push(i);
+    vector<int> orden;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        orden.push_back(u);
+        for (int v : adj[u]) if (--indeg[v] == 0) q.push(v);
+    }
+    if ((int)orden.size() != n) return {}; // hay ciclo, no es DAG
+    return orden;
+}
+\end{lstlisting}
+
+\subsection{DFS (post-orden invertido)}
+\begin{lstlisting}
+vector<bool> visitadoTopo;
+vector<int> ordenTopo;
+void dfsTopo(int u, vector<vector<int>>& adj) {
+    visitadoTopo[u] = true;
+    for (int v : adj[u]) if (!visitadoTopo[v]) dfsTopo(v, adj);
+    ordenTopo.push_back(u);
+}
+vector<int> topoSortDFS(int n, vector<vector<int>>& adj) {
+    visitadoTopo.assign(n + 1, false);
+    ordenTopo.clear();
+    for (int i = 1; i <= n; i++) if (!visitadoTopo[i]) dfsTopo(i, adj);
+    reverse(ordenTopo.begin(), ordenTopo.end());
+    return ordenTopo; // NO valida ciclos, verificar con tieneCicloDirigido primero
+}
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{Caminos Mínimos con Pesos}
+% -------------------------------------------------------------------------
+
+\subsection{Dijkstra (pesos no negativos)}
+\textbf{Complejidad:} $\mathcal{O}((V + E) \log V)$
+\begin{lstlisting}
+const ll INF_LL = 1e18;
+vector<ll> dijkstra(int src, int n,
+                     const vector<vector<pair<int,ll>>>& adj) {
+    vector<ll> dist(n + 1, INF_LL);
+    priority_queue<pair<ll,int>, vector<pair<ll,int>>, greater<>> pq;
+    dist[src] = 0;
+    pq.push({0, src});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+        if (d != dist[u]) continue; // descarta entradas obsoletas
+
+        for (const auto& [v, w] : adj[u]) {
+            if (d + w < dist[v]) {
+                dist[v] = d + w;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+    return dist;
+}
+\end{lstlisting}
+
+\subsection{Bellman-Ford (permite pesos negativos)}
+\textbf{Complejidad:} $\mathcal{O}(V \cdot E)$ en el peor caso; puede terminar antes si no hay más relajaciones.
+\begin{lstlisting}
+struct Edge { int u, v; ll w; };
+pair<vector<ll>, bool> bellmanFord(int src, int n, vector<Edge>& edges) {
+    vector<ll> dist(n + 1, INF_LL);
+    dist[src] = 0;
+    for (int i = 0; i < n - 1; i++) {
+        bool changed = false;
+        for (const auto& e : edges) {
+            if (dist[e.u] != INF_LL && dist[e.u] + e.w < dist[e.v]) {
+                dist[e.v] = dist[e.u] + e.w;
+                changed = true;
+            }
+        }
+        if (!changed) break; // ya convergió; evita pasadas innecesarias
+    }
+    bool cicloNegativo = false;
+    for (auto& e : edges)
+        if (dist[e.u] != INF_LL && dist[e.u] + e.w < dist[e.v]) { cicloNegativo = true; break; }
+    return {dist, cicloNegativo};
+}
+\end{lstlisting}
+
+\subsection{Floyd-Warshall (todos los pares)}
+\textbf{Complejidad:} $\mathcal{O}(V^3)$. Práctico para $V \lesssim 500$.
+\begin{lstlisting}
+void floydWarshall(vector<vector<ll>>& dist, int n) {
+    // dist[i][j] = peso i->j, INF si no hay arista, 0 si i == j
+    for (int k = 0; k < n; k++) {
+        for (int i = 0; i < n; i++) {
+            if (dist[i][k] == INF_LL) continue;
+            const ll dik = dist[i][k];
+            for (int j = 0; j < n; j++) {
+                if (dist[k][j] == INF_LL) continue;
+                dist[i][j] = min(dist[i][j], dik + dist[k][j]);
+            }
+        }
+    }
+    // Ciclo negativo si dist[i][i] < 0 para algun i
+}
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{Árbol de Expansión Mínima (MST)}
+% -------------------------------------------------------------------------
+
+\subsection{Kruskal (recomendado, más fácil de codear)}
+\textbf{Complejidad:} $\mathcal{O}(E \log E)$. Requiere DSU (ver capítulo de Estructuras de Datos).
+\begin{lstlisting}
+struct EdgeW { int u, v; ll w; bool operator<(const EdgeW& o) const { return w < o.w; } };
+ll kruskal(int n, vector<EdgeW>& edges) {
+    sort(edges.begin(), edges.end());
+    DSU dsu(n + 1);
+    ll costoTotal = 0; int aristasUsadas = 0;
+    for (const auto& e : edges) {
+        if (dsu.find(e.u) != dsu.find(e.v)) {
+            dsu.unite(e.u, e.v);
+            costoTotal += e.w;
+            if (++aristasUsadas == n - 1) break; // MST completa
+        }
+    }
+    // Si aristasUsadas != n - 1, el grafo no es conexo
+    return costoTotal;
+}
+\end{lstlisting}
+
+\subsection{Prim (mejor para grafos densos)}
+\textbf{Complejidad:} $\mathcal{O}(E \log V)$
+\begin{lstlisting}
+ll prim(int n, vector<vector<pair<int,ll>>>& adj) {
+    vector<bool> inMST(n + 1, false);
+    priority_queue<pair<ll,int>, vector<pair<ll,int>>, greater<>> pq;
+    pq.push({0, 1}); // asumiendo raiz = nodo 1
+    ll costoTotal = 0;
+    while (!pq.empty()) {
+        auto [w, u] = pq.top(); pq.pop();
+        if (inMST[u]) continue;
+        inMST[u] = true; costoTotal += w;
+        for (auto [v, peso] : adj[u]) if (!inMST[v]) pq.push({peso, v});
+    }
+    return costoTotal;
+}
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{Componentes Fuertemente Conexas: Tarjan}
+% -------------------------------------------------------------------------
+\textbf{Complejidad:} $\mathcal{O}(V + E)$. Encuentra SCC de un grafo dirigido en una sola pasada DFS.
+\begin{lstlisting}
+int timerScc; vector<vector<int>> adjScc;
+vector<int> disc, low, comp;
+vector<bool> onStack; stack<int> stScc; int sccCount;
+void tarjanDfs(int u) {
+    disc[u] = low[u] = timerScc++;
+    stScc.push(u); onStack[u] = true;
+    for (int v : adjScc[u]) {
+        if (disc[v] == -1) { tarjanDfs(v); low[u] = min(low[u], low[v]); }
+        else if (onStack[v]) low[u] = min(low[u], disc[v]);
+    }
+    if (low[u] == disc[u]) {
+        while (true) {
+            int v = stScc.top(); stScc.pop(); onStack[v] = false;
+            comp[v] = sccCount;
+            if (v == u) break;
+        }
+        sccCount++;
+    }
+}
+void tarjanSCC(int n) {
+    disc.assign(n + 1, -1); low.assign(n + 1, -1);
+    comp.assign(n + 1, -1); onStack.assign(n + 1, false);
+    timerScc = 0; sccCount = 0;
+    for (int i = 1; i <= n; i++) if (disc[i] == -1) tarjanDfs(i);
+}
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{Puentes y Puntos de Articulación}
+% -------------------------------------------------------------------------
+\textbf{Complejidad:} $\mathcal{O}(V + E)$. Aristas/vértices cuya eliminación desconecta el grafo (grafo NO dirigido).
+\begin{lstlisting}
+int timerBridge; vector<vector<int>> adjBridge;
+vector<int> discB, lowB, parentB;
+vector<bool> esArticulacion;
+vector<pair<int,int>> puentes;
+void bridgeDfs(int u) {
+    discB[u] = lowB[u] = timerBridge++;
+    int hijos = 0;
+    for (int v : adjBridge[u]) {
+        if (v == parentB[u]) continue;
+        if (discB[v] != -1) {
+            lowB[u] = min(lowB[u], discB[v]);
+        } else {
+            hijos++;
+            parentB[v] = u;
+            bridgeDfs(v);
+            lowB[u] = min(lowB[u], lowB[v]);
+            if (lowB[v] > discB[u]) puentes.push_back({u, v});
+            if (parentB[u] != -1 && lowB[v] >= discB[u]) esArticulacion[u] = true;
+        }
+    }
+    if (parentB[u] == -1 && hijos > 1) esArticulacion[u] = true; // caso raiz
+}
+void encontrarPuentesYArticulacion(int n) {
+    discB.assign(n + 1, -1); lowB.assign(n + 1, -1);
+    parentB.assign(n + 1, -1); esArticulacion.assign(n + 1, false);
+    timerBridge = 0;
+    for (int i = 1; i <= n; i++) if (discB[i] == -1) bridgeDfs(i);
+}
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{Ancestro Común Más Bajo (LCA) --- Binary Lifting}
+% -------------------------------------------------------------------------
+\textbf{Complejidad:} $\mathcal{O}(V \log V)$ preprocesamiento, $\mathcal{O}(\log V)$ por consulta.
+\begin{lstlisting}
+int LOG_;
+vector<vector<int>> upLca, adjLca;
+vector<int> depthLca;
+void lcaDfs(int u, int p) {
+    upLca[u][0] = p;
+    for (int j = 1; j < LOG_; j++)
+        upLca[u][j] = (upLca[u][j-1] == -1) ? -1 : upLca[upLca[u][j-1]][j-1];
+    for (int v : adjLca[u]) if (v != p) { depthLca[v] = depthLca[u] + 1; lcaDfs(v, u); }
+}
+void lcaInit(int n, int raiz) {
+    LOG_ = ceil(log2(max(2, n))) + 1;
+    upLca.assign(n + 1, vector<int>(LOG_, -1));
+    depthLca.assign(n + 1, 0);
+    lcaDfs(raiz, -1);
+}
+int lcaQuery(int u, int v) {
+    if (depthLca[u] < depthLca[v]) swap(u, v);
+    int diff = depthLca[u] - depthLca[v];
+    for (int j = 0; j < LOG_; j++) if ((diff >> j) & 1) u = upLca[u][j];
+    if (u == v) return u;
+    for (int j = LOG_ - 1; j >= 0; j--)
+        if (upLca[u][j] != upLca[v][j]) { u = upLca[u][j]; v = upLca[v][j]; }
+    return upLca[u][0];
+}
+// Distancia entre u y v en el arbol:
+// int distArbol(int u, int v) { int l = lcaQuery(u,v); return depthLca[u]+depthLca[v]-2*depthLca[l]; }
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{2-SAT}
+% -------------------------------------------------------------------------
+\textbf{Complejidad:} $\mathcal{O}(V + E)$
+\begin{lstlisting}
+struct TwoSAT {
+    int n;
+    vector<vector<int>> adj, radj;
+    vector<int> comp, order_, assign_;
+    vector<bool> visited;
+    TwoSAT(int n) : n(n), adj(2*n), radj(2*n), comp(2*n, -1), visited(2*n, false) {}
+    int idx(int var, bool val) { return 2*var + (val ? 1 : 0); }
+    void addClause(int var1, bool val1, int var2, bool val2) {
+        adj[idx(var1, !val1)].push_back(idx(var2, val2));
+        adj[idx(var2, !val2)].push_back(idx(var1, val1));
+        radj[idx(var2, val2)].push_back(idx(var1, !val1));
+        radj[idx(var1, val1)].push_back(idx(var2, !val2));
+    }
+    void dfs1(int u) {
+        visited[u] = true;
+        for (int v : adj[u]) if (!visited[v]) dfs1(v);
+        order_.push_back(u);
+    }
+    void dfs2(int u, int c) {
+        comp[u] = c;
+        for (int v : radj[u]) if (comp[v] == -1) dfs2(v, c);
+    }
+    bool solve() {
+        for (int i = 0; i < 2*n; i++) if (!visited[i]) dfs1(i);
+        int c = 0;
+        for (int i = 2*n - 1; i >= 0; i--) {
+            int u = order_[i];
+            if (comp[u] == -1) dfs2(u, c++);
+        }
+        assign_.assign(n, -1);
+        for (int i = 0; i < n; i++) {
+            if (comp[idx(i,true)] == comp[idx(i,false)]) return false;
+            assign_[i] = comp[idx(i,true)] > comp[idx(i,false)];
+        }
+        return true;
+    }
+};
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{Flujo Máximo: Edmonds-Karp}
+% -------------------------------------------------------------------------
+\textbf{Complejidad:} $\mathcal{O}(V E^2)$
+\begin{lstlisting}
+const int INF = 1e9;
+int nFlujo; vector<vector<int>> capacidad, adjFlujo;
+int bfsFlujo(int s, int t, vector<int>& parent) {
+    fill(parent.begin(), parent.end(), -1); parent[s] = -2;
+    queue<pair<int,int>> q; q.push({s, INF});
+    while (!q.empty()) {
+        auto [cur, flow] = q.front(); q.pop();
+        for (int next : adjFlujo[cur]) {
+            if (parent[next] == -1 && capacidad[cur][next] > 0) {
+                parent[next] = cur;
+                int newFlow = min(flow, capacidad[cur][next]);
+                if (next == t) return newFlow;
+                q.push({next, newFlow});
+            }
+        }
+    }
+    return 0;
+}
+int edmondsKarp(int s, int t) {
+    int flow = 0; vector<int> parent(nFlujo); int newFlow;
+    while ((newFlow = bfsFlujo(s, t, parent))) {
+        flow += newFlow; int cur = t;
+        while (cur != s) {
+            int prev = parent[cur];
+            capacidad[prev][cur] -= newFlow;
+            capacidad[cur][prev] += newFlow;
+            cur = prev;
+        }
+    }
+    return flow;
+}
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{Grafos Implícitos en Grid/Matriz}
+% -------------------------------------------------------------------------
+\textbf{Complejidad:} $\mathcal{O}(R \cdot C)$ donde $R, C$ son filas y columnas. \\
+Muy frecuente en competencia: laberintos, conteo de islas, agua/incendio expandiéndose. Cada celda es un nodo implícito, sin necesidad de construir \texttt{adj} explícitamente.
+\begin{lstlisting}
+int R, C;
+vector<string> grid; // grid[i][j] = caracter de la celda
+vector<vector<int>> distGrid;
+// 4 direcciones (arriba, abajo, izquierda, derecha)
+int dx4[] = {-1, 1, 0, 0};
+int dy4[] = {0, 0, -1, 1};
+// 8 direcciones (agrega diagonales)
+int dx8[] = {-1,-1,-1, 0, 0, 1, 1, 1};
+int dy8[] = {-1, 0, 1,-1, 1,-1, 0, 1};
+
+bool dentroDelGrid(int x, int y) { return x >= 0 && x < R && y >= 0 && y < C; }
+
+void bfsGrid(int startX, int startY, char obstaculo = '#') {
+    distGrid.assign(R, vector<int>(C, -1));
+    queue<pair<int,int>> q;
+    distGrid[startX][startY] = 0;
+    q.push({startX, startY});
+    while (!q.empty()) {
+        auto [x, y] = q.front(); q.pop();
+        for (int d = 0; d < 4; d++) {
+            int nx = x + dx4[d], ny = y + dy4[d];
+            if (dentroDelGrid(nx, ny) && distGrid[nx][ny] == -1 && grid[nx][ny] != obstaculo) {
+                distGrid[nx][ny] = distGrid[x][y] + 1;
+                q.push({nx, ny});
+            }
+        }
+    }
+}
+// Contar componentes conexas en grid (ej: contar islas)
+vector<vector<bool>> visitadoGrid;
+void dfsGrid(int x, int y, char objetivo) {
+    if (!dentroDelGrid(x, y) || visitadoGrid[x][y] || grid[x][y] != objetivo) return;
+    visitadoGrid[x][y] = true;
+    for (int d = 0; d < 4; d++) dfsGrid(x + dx4[d], y + dy4[d], objetivo);
+}
+int contarIslas(char tierra = '1') {
+    visitadoGrid.assign(R, vector<bool>(C, false));
+    int islas = 0;
+    for (int i = 0; i < R; i++)
+        for (int j = 0; j < C; j++)
+            if (grid[i][j] == tierra && !visitadoGrid[i][j]) { dfsGrid(i, j, tierra); islas++; }
+    return islas;
+}
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{Errores Comunes que Cuestan Penalizaciones}
+% -------------------------------------------------------------------------
+\begin{itemize}
+    \item Olvidar resetear \texttt{visitado}/\texttt{dist}/\texttt{adj} entre casos de prueba (multi-test).
+    \item No verificar límites de un grid/matriz antes de moverse a un vecino.
+    \item Confundir grafo dirigido vs no dirigido al agregar aristas.
+    \item Usar DFS recursivo en grafos gigantes ($n \gtrsim 10^5$) con forma de cadena $\rightarrow$ stack overflow. Usar BFS o DFS iterativo.
+    \item En BFS: marcar visitado al \textbf{encolar}, no al desencolar (si no, el mismo nodo entra varias veces a la cola).
+    \item Usar Dijkstra con pesos negativos (da resultados incorrectos): usar Bellman-Ford en ese caso.
+    \item Olvidar que \texttt{topoSortDFS} no detecta ciclos por sí solo: verificar aciclicidad antes, o usar Kahn directamente.
+    \item En 0/1 BFS, confundir el orden de \texttt{push\_front}/\texttt{push\_back} (0 al frente, 1 al final).
+\end{itemize}
+
+% =========================================================================
+\chapter{Cadenas (Strings)}
+% =========================================================================
+\section{KMP (Knuth-Morris-Pratt)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N + M)$, donde $N$ es el texto y $M$ el patrón. \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(M)$ \\
+Busca todas las ocurrencias de un patrón dentro de un texto sin retroceder en el texto, usando una tabla de fallos (\textit{prefix function}) precalculada sobre el patrón.
+\begin{lstlisting}
+vector<int> build_prefix_function(const string& pat) {
+    int m = pat.size();
+    vector<int> pi(m, 0);
+    for (int i = 1; i < m; i++) {
+        int j = pi[i-1];
+        while (j > 0 && pat[i] != pat[j]) j = pi[j-1];
+        if (pat[i] == pat[j]) j++;
+        pi[i] = j;
+    }
+    return pi;
+}
+// Devuelve las posiciones (0-indexadas) en 'texto' donde inicia 'pat'
+vector<int> kmp_search(const string& texto, const string& pat) {
+    vector<int> pi = build_prefix_function(pat);
+    vector<int> ocurrencias;
+    int j = 0;
+    for (int i = 0; i < (int)texto.size(); i++) {
+        while (j > 0 && texto[i] != pat[j]) j = pi[j-1];
+        if (texto[i] == pat[j]) j++;
+        if (j == (int)pat.size()) {
+            ocurrencias.push_back(i - j + 1);
+            j = pi[j-1];
+        }
+    }
+    return ocurrencias;
+}
+\end{lstlisting}
+\section{Z-Function}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N)$ \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N)$ \\
+Para cada posición $i$, calcula la longitud del prefijo común más largo entre la cadena completa y el sufijo que empieza en $i$. Útil para \textit{matching} de patrones (concatenando $pat + \# + texto$) y detección de periodicidad.
+\begin{lstlisting}
+vector<int> z_function(const string& s) {
+    int n = s.size();
+    vector<int> z(n, 0);
+    int l = 0, r = 0;
+    for (int i = 1; i < n; i++) {
+        if (i < r) z[i] = min(r - i, z[i - l]);
+        while (i + z[i] < n && s[z[i]] == s[i + z[i]]) z[i]++;
+        if (i + z[i] > r) { l = i; r = i + z[i]; }
+    }
+    return z;
+}
+\end{lstlisting}
+\section{Hashing de Strings (Polinomial)}
+\textbf{Complejidad de Tiempo:}
+\begin{itemize}
+    \item \textbf{Precomputo:} $\mathcal{O}(N)$
+    \item \textbf{Consulta de hash de subcadena:} $\mathcal{O}(1)$
+\end{itemize}
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N)$ \\
+Permite comparar subcadenas en O(1) tras el precomputo, útil para detectar duplicados o hacer búsqueda binaria sobre la longitud del prefijo/subcadena común. Se recomienda usar doble hashing (dos módulos) para evitar colisiones adversariales.
+\begin{lstlisting}
+struct StringHash {
+    vector<ll> h, p;
+    ll MOD, BASE;
+    StringHash(const string& s, ll mod = 1e9+7, ll base = 131) : MOD(mod), BASE(base) {
+        int n = s.size();
+        h.assign(n + 1, 0); p.assign(n + 1, 1);
+        for (int i = 0; i < n; i++) {
+            h[i+1] = (h[i] * BASE + s[i]) % MOD;
+            p[i+1] = (p[i] * BASE) % MOD;
+        }
+    }
+    // Hash del rango [l, r] (0-indexado, inclusivo)
+    ll getHash(int l, int r) {
+        ll res = (h[r+1] - (h[l] * p[r-l+1]) % MOD + MOD * MOD) % MOD;
+        return res;
+    }
+};
+\end{lstlisting}
+\section{Manacher (Palíndromos)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N)$ \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N)$ \\
+Encuentra el radio del palíndromo más largo centrado en cada posición, manejando de forma unificada los casos de longitud par e impar mediante la inserción de separadores.
+\begin{lstlisting}
+// Retorna, para la cadena transformada t = "#a#b#b#a#", el radio de palindromo en cada centro
+vector<int> manacher(const string& s) {
+    string t = "#";
+    for (char c : s) { t += c; t += '#'; }
+    int n = t.size();
+    vector<int> radio(n, 0);
+    int l = 0, r = -1;
+    for (int i = 0; i < n; i++) {
+        int k = (i > r) ? 1 : min(radio[l + r - i], r - i + 1);
+        while (i - k >= 0 && i + k < n && t[i-k] == t[i+k]) k++;
+        radio[i] = k--;
+        if (i + k > r) { l = i - k; r = i + k; }
+    }
+    return radio; // longitud del palindromo centrado en i es radio[i]-1
+}
+\end{lstlisting}
+\section{Boyer-Moore (Búsqueda de Patrones)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N + M)$ en promedio, y en el mejor caso llega a ser \textbf{sublineal} ($\mathcal{O}(N/M)$) ya que permite saltar varias posiciones del texto de una vez. Peor caso $\mathcal{O}(N \cdot M)$ sin la heurística de sufijo bueno (poco común en la práctica). \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(M + \Sigma)$, donde $\Sigma$ es el tamaño del alfabeto. \\
+A diferencia de KMP (que avanza de izquierda a derecha comparando), Boyer-Moore compara el patrón contra el texto \textbf{de derecha a izquierda}, y cuando encuentra un mismatch usa la heurística del \textit{"bad character"} para saltar el patrón varias posiciones de una sola vez, evitando comparaciones innecesarias. Es el algoritmo que usan en la práctica muchos motores de búsqueda de texto (ej. \texttt{grep}) por su gran rendimiento en alfabetos grandes (texto natural).
+\begin{lstlisting}
+// Heuristica del "bad character": para cada caracter del alfabeto, guarda
+// la ultima posicion en la que aparece dentro del patron
+vector<int> build_bad_char_table(const string& pat, int alphabetSize = 256) {
+    vector<int> lastOcc(alphabetSize, -1);
+    for (int i = 0; i < (int)pat.size(); i++) lastOcc[(unsigned char)pat[i]] = i;
+    return lastOcc;
+}
+// Devuelve las posiciones (0-indexadas) en 'texto' donde inicia 'pat'
+vector<int> boyer_moore_search(const string& texto, const string& pat) {
+    int n = texto.size(), m = pat.size();
+    if (m == 0 || m > n) return {};
+    vector<int> badChar = build_bad_char_table(pat);
+    vector<int> ocurrencias;
+    int s = 0; // desplazamiento del patron respecto al inicio del texto
+    while (s <= n - m) {
+        int j = m - 1;
+        // Compara de derecha a izquierda mientras los caracteres coincidan
+        while (j >= 0 && pat[j] == texto[s + j]) j--;
+        if (j < 0) {
+            ocurrencias.push_back(s); // match completo encontrado
+            // Desplaza usando el caracter siguiente al patron (o 1 si no hay mas texto)
+            s += (s + m < n) ? m - badChar[(unsigned char)texto[s + m]] : 1;
+        } else {
+            // Salta segun la ultima ocurrencia del caracter conflictivo en el patron
+            int shift = j - badChar[(unsigned char)texto[s + j]];
+            s += max(1, shift); // al menos avanza 1 para garantizar progreso
+        }
+    }
+    return ocurrencias;
+}
+\end{lstlisting}
+\subsubsection{Variante: Boyer-Moore Voting Algorithm (Elemento Mayoritario)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N)$ \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(1)$ \\
+No confundir con el algoritmo anterior: comparte el nombre del mismo autor (Robert S. Boyer) pero resuelve un problema distinto — encontrar el elemento que aparece \textbf{más de $N/2$ veces} en un arreglo, en una sola pasada y sin memoria extra.
+\begin{lstlisting}
+// Encuentra el candidato a elemento mayoritario (aparece > n/2 veces)
+// IMPORTANTE: requiere una segunda pasada para confirmar que realmente es mayoria,
+// ya que si no existe tal elemento, el algoritmo igual retorna un candidato invalido
+int boyer_moore_voting(const vector<int>& arr) {
+    int candidato = 0, contador = 0;
+    for (int x : arr) {
+        if (contador == 0) candidato = x;
+        contador += (x == candidato) ? 1 : -1;
+    }
+    // Verificacion (obligatoria)
+    int freq = count(arr.begin(), arr.end(), candidato);
+    return (freq > (int)arr.size() / 2) ? candidato : -1; // -1 si no hay mayoria
+}
+\end{lstlisting}
+% =========================================================================
+\chapter{Programación Dinámica (DP)}
+% =========================================================================
+
+% -------------------------------------------------------------------------
+\section{¿Cuándo Usar Programación Dinámica?}
+% -------------------------------------------------------------------------
+DP aplica cuando el problema cumple \textbf{ambas} condiciones:
+\begin{itemize}
+    \item \textbf{Subestructura óptima:} la solución óptima del problema completo se puede construir a partir de soluciones óptimas de subproblemas más pequeños.
+    \item \textbf{Subproblemas superpuestos:} al resolver recursivamente, los mismos subproblemas se repiten muchas veces (si no se repiten, es simple recursión/divide y vencerás, no DP).
+\end{itemize}
+\textbf{Pistas típicas en el enunciado:}
+\begin{itemize}
+    \item "Cuenta el número de formas de..." / "¿Cuántas maneras hay de...?"
+    \item "Encuentra el mínimo/máximo costo/valor/longitud para..."
+    \item "¿Es posible lograr...?" (decisión, sí/no) con restricciones acumulativas.
+    \item El problema se puede describir con un estado que depende de "decisiones anteriores" (ej. posición actual, capacidad restante, elementos ya usados).
+    \item Fuerza bruta recursiva sería exponencial, pero el número de \textbf{estados distintos} es polinomial.
+\end{itemize}
+\textbf{Cómo diseñar la solución (pasos sugeridos):}
+\begin{enumerate}
+    \item Define el \textbf{estado}: ¿qué información mínima necesito para tomar la siguiente decisión? (ej. índice actual, peso restante, máscara de visitados).
+    \item Define la \textbf{transición}: dado un estado, ¿cómo se llega a los estados siguientes/anteriores?
+    \item Define el/los \textbf{caso(s) base}.
+    \item Decide el \textbf{orden de cálculo}: top-down (memoización, más fácil de escribir) o bottom-up (tabulación, evita stack overflow y suele ser más rápido).
+    \item Verifica la \textbf{complejidad}: (cantidad de estados) $\times$ (costo por transición).
+\end{enumerate}
+
+% -------------------------------------------------------------------------
+\section{Plantilla General de DP (Top-Down / Memoización)}
+% -------------------------------------------------------------------------
+\textbf{Complejidad de Tiempo:} (número de estados) $\times$ (costo de la transición). \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(\text{número de estados})$ para la tabla de memo. \\
+Esqueleto reutilizable: solo hay que cambiar el caso base y la transición según el problema. El ejemplo concreto de la transición cuenta caminos en una grilla moviéndose solo hacia la derecha o hacia abajo (resultado conocido: $\binom{i+j}{i}$).
+\begin{lstlisting}
+// ---- Version con arreglo (mas rapida, requiere conocer los limites del estado) ----
+const int MAXI = 1005, MAXJ = 1005;
+ll dpGeneral[MAXI][MAXJ];
+bool visitadoDp[MAXI][MAXJ]; // IMPORTANTE: resetear entre casos de prueba (memset o fill)
+
+ll solve(int i, int j /*, parametros adicionales del problema */) {
+    // 1) Caso(s) base
+    if (i < 0 || j < 0) return 0;
+    if (i == 0 && j == 0) return 1;
+    // 2) Memo hit: si ya se calculo este estado, devolverlo sin recalcular
+    if (visitadoDp[i][j]) return dpGeneral[i][j];
+    visitadoDp[i][j] = true;
+    // 3) Transicion: combinar resultados de subproblemas mas pequenos
+    ll res = 0;
+    res += solve(i - 1, j);
+    res += solve(i, j - 1);
+    return dpGeneral[i][j] = res % MOD;
+}
+
+// ---- Version con map/unordered_map (cuando el estado no cabe en un arreglo,
+//      ej. bitmask + nodo, o el rango del estado es muy grande/disperso) ----
+map<pair<int,int>, ll> memoGenerico;
+ll solveMap(int i, int j) {
+    if (i < 0 || j < 0) return 0;
+    if (i == 0 && j == 0) return 1;
+    auto key = make_pair(i, j);
+    auto it = memoGenerico.find(key);
+    if (it != memoGenerico.end()) return it->second;
+    ll res = solveMap(i - 1, j) + solveMap(i, j - 1);
+    return memoGenerico[key] = res % MOD;
+}
+\end{lstlisting}
+\textbf{Tip:} si la version recursiva (top-down) hace stack overflow por demasiada profundidad, convertir a \textit{bottom-up} (tabulación): iterar los estados en el orden correcto (de los casos base hacia el estado final) usando bucles \texttt{for} en vez de recursión.
+
+% -------------------------------------------------------------------------
+\section{Fibonacci con Memoización}
+% -------------------------------------------------------------------------
+Ejemplo clásico de subproblemas superpuestos: $F(n) = F(n-1) + F(n-2)$ recalcula los mismos valores exponencialmente sin memoizar. Ver también la sección "Fibonacci Matricial" en el capítulo de Fórmulas Matemáticas Esenciales para la versión $\mathcal{O}(\log n)$.
+
+\subsection{Versión con Arreglo}
+\textbf{Complejidad:} $\mathcal{O}(N)$ tiempo y espacio. Ideal cuando $N \lesssim 10^6$ y se conoce el límite de antemano.
+\begin{lstlisting}
+const int MAXN = 1000006;
+ll memoFib[MAXN];
+bool calculadoFib[MAXN];
+ll fibonacci_memo(int n) {
+    if (n <= 1) return n;
+    if (calculadoFib[n]) return memoFib[n];
+    calculadoFib[n] = true;
+    return memoFib[n] = (fibonacci_memo(n - 1) + fibonacci_memo(n - 2)) % MOD;
+}
+\end{lstlisting}
+
+\subsection{Versión con \texttt{unordered\_map}}
+\textbf{Complejidad:} $\mathcal{O}(N)$ tiempo, sin necesidad de reservar un arreglo de tamaño fijo por adelantado.
+\begin{lstlisting}
+unordered_map<ll, ll> memoFibMap;
+ll fibonacci_memo_map(ll n) {
+    if (n <= 1) return n;
+    auto it = memoFibMap.find(n);
+    if (it != memoFibMap.end()) return it->second;
+    ll res = (fibonacci_memo_map(n - 1) + fibonacci_memo_map(n - 2)) % MOD;
+    return memoFibMap[n] = res;
+}
+\end{lstlisting}
+
+\subsection{Fast Doubling con Memoización}
+\textbf{Complejidad:} $\mathcal{O}(\log N)$. La mejor opción para $N$ gigante (hasta $10^{18}$) manteniendo un estilo recursivo/memoizado. Se basa en las identidades:
+\[
+F(2k) = F(k)\cdot(2F(k+1)-F(k)), \qquad F(2k+1) = F(k)^2 + F(k+1)^2
+\]
+\begin{lstlisting}
+unordered_map<ll, pair<ll,ll>> memoFastDouble; // n -> {F(n), F(n+1)}
+pair<ll,ll> fib_fast_doubling(ll n) {
+    if (n == 0) return {0, 1};
+    auto it = memoFastDouble.find(n);
+    if (it != memoFastDouble.end()) return it->second;
+    auto [fk, fk1] = fib_fast_doubling(n / 2);
+    ll c = (fk * ((2 * fk1 - fk % MOD + MOD) % MOD)) % MOD; // F(2k)
+    ll d = (fk * fk % MOD + fk1 * fk1 % MOD) % MOD;         // F(2k+1)
+    pair<ll,ll> res;
+    if (n % 2 == 0) res = {c, d};
+    else res = {d, (c + d) % MOD};
+    return memoFastDouble[n] = res;
+}
+ll fibonacci_fast_doubling(ll n) { return fib_fast_doubling(n).first; }
+\end{lstlisting}
+
+% =========================================================================
+\section{Mochila 0-1 (0-1 Knapsack)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N \cdot W)$, donde $N$ es la cantidad de elementos y $W$ la capacidad de peso máximo de la mochila. \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(W)$ mediante optimización con un arreglo unidimensional.
+\begin{lstlisting}
+int knapsack(int W, const vector<int>& peso, const vector<int>& valor, int n) {
+    vector<int> dp(W + 1, 0);
+    for (int i = 0; i < n; i++) {
+        for (int w = W; w >= peso[i]; w--) {
+            dp[w] = max(dp[w], dp[w - peso[i]] + valor[i]);
+        }
+    }
+    return dp[W];
+}
+\end{lstlisting}
+\section{Longest Common Subsequence (LCS)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(|S| \cdot |T|)$ \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(|S| \cdot |T|)$ \\
+Encuentra la subsecuencia común más larga entre dos strings $S$ y $T$.
+\begin{lstlisting}
+int lcs(string S, string T) {
+    int n = S.size(), m = T.size();
+    vector<vector<int>> dp(n + 1, vector<int>(m + 1, 0));
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= m; j++) {
+            if (S[i-1] == T[j-1]) dp[i][j] = dp[i-1][j-1] + 1;
+            else dp[i][j] = max(dp[i-1][j], dp[i][j-1]);
+        }
+    }
+    return dp[n][m];
+}
+\end{lstlisting}
+\section{Longest Increasing Subsequence (LIS)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N \log N)$ mediante búsqueda binaria de reemplazo. \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N)$ \\
+Calcula la longitud de la subsecuencia estrictamente creciente más larga de un arreglo de tamaño $N$.
+\begin{lstlisting}
+int lis(const vector<int>& a) {
+    vector<int> tails;
+    for (int x : a) {
+        auto it = lower_bound(tails.begin(), tails.end(), x);
+        if (it == tails.end()) tails.push_back(x);
+        else *it = x;
+    }
+    return tails.size();
+}
+\end{lstlisting}
+\section{DP con Máscaras de Bits (Bitmask DP - TSP)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(2^N \cdot N^2)$ \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(2^N \cdot N)$ \\
+Resuelve el Problema del Viajero (TSP) encontrando el ciclo hamiltoniano de coste mínimo en un grafo con $N \le 20$. El estado se representa combinando un bitmask y el nodo actual.
+\begin{lstlisting}
+int n; int dist[20][20]; int dp[1 << 20][20]; // Inicializar en -1
+int tsp(int mask, int u) {
+    if (mask == (1 << n) - 1) return dist[u][0];
+    if (dp[mask][u] != -1) return dp[mask][u];
+    int ans = 1e9;
+    for (int v = 0; v < n; v++) {
+        if (!(mask & (1 << v))) {
+            ans = min(ans, dist[u][v] + tsp(mask | (1 << v), v));
+        }
+    }
+    return dp[mask][u] = ans;
+}
+\end{lstlisting}
+\section{DP en Árboles (Tree DP)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(V)$ (o $\mathcal{O}(V \log V)$ si se combinan estructuras auxiliares por nodo). \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(V)$ \\
+Patrón general para calcular información agregada en árboles mediante DFS post-order: primero se resuelven los hijos, luego se combina el resultado en el padre. El ejemplo calcula el tamaño del subárbol y el conjunto independiente máximo ponderado.
+\begin{lstlisting}
+vector<vector<int>> adj_tree;
+vector<ll> peso_nodo;
+ll dpIncluye[200005], dpExcluye[200005]; // Inicializar en 0
+void tree_dp(int u, int padre) {
+    dpIncluye[u] = peso_nodo[u];
+    dpExcluye[u] = 0;
+    for (int v : adj_tree[u]) {
+        if (v == padre) continue;
+        tree_dp(v, u);
+        dpIncluye[u] += dpExcluye[v]; // Si tomo u, no puedo tomar sus hijos
+        dpExcluye[u] += max(dpIncluye[v], dpExcluye[v]);
+    }
+}
+// Respuesta final: max(dpIncluye[raiz], dpExcluye[raiz])
+\end{lstlisting}
+% =========================================================================
+\chapter{Manipulación de Bits (Bitwise)}
+% =========================================================================
+\section{Operaciones Básicas y Trucos Fundamentales}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(1)$ por operación \\
+Los operadores \texttt{\&} (AND), \texttt{|} (OR), \texttt{\^} (XOR), \texttt{\textasciitilde} (NOT), \texttt{<<} y \texttt{>>} (shifts) trabajan directamente sobre la representación binaria. Estos son los patrones que más se repiten en concursos.
+\begin{lstlisting}
+int x = 0;
+// Consultar el bit i (0-indexado desde el menos significativo)
+bool bit_i = (x >> i) & 1;
+// Prender (set) el bit i
+x |= (1 << i);
+// Apagar (clear) el bit i
+x &= ~(1 << i);
+// Invertir (toggle) el bit i
+x ^= (1 << i);
+// Obtener el bit menos significativo prendido (lowest set bit)
+int lsb = x & (-x);
+// Apagar el bit menos significativo prendido
+int sin_lsb = x & (x - 1);
+// Verificar si x es potencia de 2 (y distinto de 0)
+bool es_potencia_2 = x > 0 && (x & (x - 1)) == 0;
+// Redondear hacia arriba a la siguiente potencia de 2
+ll siguiente_potencia_2(ll n) {
+    ll p = 1;
+    while (p < n) p <<= 1;
+    return p;
+}
+\end{lstlisting}
+\section{Conteo de Bits (Popcount)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(1)$ amortizado con funciones \texttt{\_\_builtin} (usan instrucciones nativas del procesador), $\mathcal{O}(\log N)$ con la versión manual. \\
+Contar cuántos bits están prendidos en un número es una operación extremadamente común. GCC ofrece funciones nativas muy rápidas que conviene memorizar.
+\begin{lstlisting}
+int x = 42;
+int cnt = __builtin_popcount(x);        // cuenta bits en 1 (int, 32 bits)
+int cntll = __builtin_popcountll(x);    // version para long long (64 bits)
+int trailing = __builtin_ctz(x);        // cantidad de ceros al final (trailing zeros)
+int leading = __builtin_clz(x);         // cantidad de ceros al inicio (leading zeros)
+int highBit = 31 - __builtin_clz(x);    // indice del bit mas significativo prendido
+// Version manual (por si no se puede usar __builtin, ej. lenguajes sin soporte)
+int popcount_manual(unsigned int x) {
+    int cnt = 0;
+    while (x) { cnt += x & 1; x >>= 1; }
+    return cnt;
+}
+// Suma total de bits prendidos en todos los numeros de 1 a N
+ll suma_bits_1_a_n(ll n) {
+    ll total = 0;
+    for (int bit = 0; (1LL << bit) <= n; bit++) {
+        ll ciclo = 1LL << (bit + 1);
+        ll completos = (n + 1) / ciclo;
+        total += completos * (1LL << bit);
+        ll resto = (n + 1) % ciclo;
+        total += max(0LL, resto - (1LL << bit));
+    }
+    return total;
+}
+\end{lstlisting}
+\subsubsection{Tabla de Popcount para Todos los Números en [0, N]}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N)$ para construir la tabla completa. \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N)$ \\
+A diferencia de \texttt{suma\_bits\_1\_a\_n} (que da un único total acumulado), esta tabla guarda el \textbf{popcount individual} de cada número de $0$ a $N$, permitiendo consultas repetidas en $\mathcal{O}(1)$. Se construye con programación dinámica: el popcount de $i$ es igual al popcount de $i$ sin su bit menos significativo, más ese bit. Es la forma estándar de precalcular popcounts masivos sin pagar $\mathcal{O}(\log N)$ por cada consulta individual (o cuando no se puede usar \texttt{\_\_builtin\_popcount}, ej. jueces que no usan GCC).
+\begin{lstlisting}
+// cnt[i] = cantidad de bits en 1 en la representacion binaria de i, para 0 <= i <= n
+vector<int> popcount_table(int n) {
+    vector<int> cnt(n + 1, 0);
+    for (int i = 1; i <= n; i++) {
+        cnt[i] = cnt[i >> 1] + (i & 1); // i>>1 quita el bit menos significativo
+    }
+    return cnt;
+}
+// Variante equivalente usando i & (i-1) (apaga el lowest set bit)
+vector<int> popcount_table_v2(int n) {
+    vector<int> cnt(n + 1, 0);
+    for (int i = 1; i <= n; i++) {
+        cnt[i] = cnt[i & (i - 1)] + 1;
+    }
+    return cnt;
+}
+\end{lstlisting}
+\section{Suma y Resta Binaria (Bit a Bit)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(\log N)$ \\
+Implementación manual de suma/resta usando solo operadores bitwise, útil para entender cómo el hardware realiza la operación (o cuando se trabaja con aritmética modular sobre bits, como en criptografía básica). El truco clave: \texttt{a \^ b} da la suma sin acarreo, y \texttt{(a \& b) << 1} da el acarreo a propagar.
+\begin{lstlisting}
+// Suma de dos enteros usando solo operadores bitwise
+int suma_bitwise(int a, int b) {
+    while (b != 0) {
+        int carry = (a & b) << 1; // acarreo: bits donde ambos son 1, desplazado
+        a = a ^ b;                 // suma sin acarreo
+        b = carry;
+    }
+    return a;
+}
+// Resta usando complemento a dos: a - b = a + (~b + 1)
+int resta_bitwise(int a, int b) {
+    return suma_bitwise(a, suma_bitwise(~b, 1));
+}
+\end{lstlisting}
+\section{Multiplicación Binaria (Russian Peasant / Egyptian Multiplication)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(\log N)$ \\
+Multiplica dos números usando solo sumas y desplazamientos de bits, descomponiendo un factor en su representación binaria. Es la misma idea que la exponenciación rápida pero aplicada a la multiplicación, y es clave para hacer \textbf{multiplicación modular segura} cuando $a \cdot b$ podría desbordar incluso a \texttt{long long} (ej. módulos cercanos a $10^{18}$).
+\begin{lstlisting}
+// Multiplica a*b de forma segura modulo 'mod', evitando overflow (sin usar __int128)
+ll mulmod_binario(ll a, ll b, ll mod) {
+    ll result = 0;
+    a %= mod;
+    while (b > 0) {
+        if (b & 1) result = (result + a) % mod; // si el bit actual de b esta prendido, suma
+        a = (a + a) % mod;  // duplica a (equivalente a a << 1)
+        b >>= 1;
+    }
+    return result;
+}
+// Multiplicacion binaria simple sin modulo (solo shifts y sumas)
+ll multiplicar_binario(ll a, ll b) {
+    ll result = 0;
+    while (b > 0) {
+        if (b & 1) result += a;
+        a <<= 1;
+        b >>= 1;
+    }
+    return result;
+}
+\end{lstlisting}
+\section{Enumeración de Submáscaras (Submask Enumeration)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(3^N)$ para enumerar todas las submáscaras de todas las máscaras de $N$ bits (no $\mathcal{O}(4^N)$, es una cota más ajustada por el número de pares (mask, submask)). \\
+Técnica clásica para recorrer todos los subconjuntos de un conjunto representado como bitmask, muy usada en DP sobre subconjuntos (\textit{SOS DP} - Sum over Subsets).
+\begin{lstlisting}
+// Recorre todas las submascaras de 'mask' (incluyendo la mascara vacia y mask mismo)
+void enumerar_submascaras(int mask) {
+    for (int sub = mask; ; sub = (sub - 1) & mask) {
+        // procesar 'sub' aqui
+        if (sub == 0) break;
+    }
+}
+// SOS DP: para cada mascara, suma los valores de todas sus submascaras
+// dp[mask] empieza como el valor base de esa mascara exacta
+void sos_dp(vector<ll>& dp, int N_BITS) {
+    for (int bit = 0; bit < N_BITS; bit++) {
+        for (int mask = 0; mask < (1 << N_BITS); mask++) {
+            if (mask & (1 << bit)) dp[mask] += dp[mask ^ (1 << bit)];
+        }
+    }
+}
+\end{lstlisting}
+\section{Propiedades y Trucos con XOR}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(1)$ a $\mathcal{O}(N)$ según el truco \\
+XOR es asociativo, conmutativo y $x \oplus x = 0$, $x \oplus 0 = x$. Estas propiedades permiten resolver varios problemas clásicos sin memoria extra.
+\begin{lstlisting}
+// Encontrar el UNICO numero que no se repite, cuando todos los demas aparecen 2 veces
+int unico_no_repetido(const vector<int>& arr) {
+    int res = 0;
+    for (int x : arr) res ^= x;
+    return res;
+}
+// Intercambiar dos variables sin variable auxiliar
+void swap_xor(int& a, int& b) {
+    if (&a == &b) return; // cuidado: falla si a y b son la misma direccion
+    a ^= b; b ^= a; a ^= b;
+}
+// Prefijos XOR: permite calcular XOR de cualquier rango [l, r] en O(1)
+vector<int> prefix_xor(const vector<int>& arr) {
+    vector<int> pre(arr.size() + 1, 0);
+    for (int i = 0; i < (int)arr.size(); i++) pre[i+1] = pre[i] ^ arr[i];
+    return pre;
+}
+int xor_rango(const vector<int>& pre, int l, int r) { // 0-indexado, inclusivo
+    return pre[r+1] ^ pre[l];
+}
+// Encontrar los DOS unicos numeros que no se repiten (los demas aparecen 2 veces)
+pair<int,int> dos_unicos_no_repetidos(const vector<int>& arr) {
+    int xorTotal = 0;
+    for (int x : arr) xorTotal ^= x;
+    int diffBit = xorTotal & (-xorTotal); // un bit donde los dos unicos difieren
+    int a = 0, b = 0;
+    for (int x : arr) {
+        if (x & diffBit) a ^= x; else b ^= x;
+    }
+    return {a, b};
+}
+\end{lstlisting}
+\section{\texttt{std::bitset}: Uso y Conversión}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N/64)$ por operación bitwise completa (AND, OR, XOR, shift) sobre todo el bitset, gracias al paralelismo a nivel de palabra del procesador — esto es lo que lo hace mucho más rápido que un \texttt{vector<bool>} o un arreglo de bools para operaciones masivas. \\
+\texttt{std::bitset<N>} representa una secuencia \textbf{fija} de $N$ bits ($N$ debe ser una constante conocida en tiempo de compilación). Es ideal para acelerar DPs booleanos, cribas, y cualquier situación con muchas operaciones bit a bit sobre conjuntos grandes.
+\begin{lstlisting}
+#include <bitset>
+bitset<32> b1;                    // 00000000000000000000000000000000, todo en 0
+bitset<32> b2(42);                // inicializado desde un entero
+bitset<8> b3("10110010");         // inicializado desde un string binario
+// Operaciones basicas
+b1[3] = 1;              // prender el bit 3 (operator[])
+b1.set(5);               // prender el bit 5
+b1.reset(3);             // apagar el bit 3
+b1.flip(0);               // invertir el bit 0
+bool bit5 = b1.test(5);   // consultar el bit 5 (mas seguro que operator[])
+int cantidadPrendidos = b1.count();  // cuenta bits en 1, equivalente a popcount
+bool hayAlguno = b1.any();           // true si algun bit esta prendido
+bool noHayNinguno = b1.none();       // true si todos estan en 0
+bool todosPrendidos = b1.all();      // true si todos estan en 1
+size_t tamano = b1.size();           // tamano fijo N (32 en este caso)
+// Operadores bitwise funcionan igual que con enteros, pero sobre todo el bitset
+bitset<32> b4 = b1 & b2;
+bitset<32> b5 = b1 | b2;
+bitset<32> b6 = b1 ^ b2;
+b1 <<= 3; // shift a la izquierda
+b1 >>= 2; // shift a la derecha
+\end{lstlisting}
+\subsubsection{Conversión a String y a Entero}
+\begin{lstlisting}
+bitset<8> b("10110010");
+// bitset -> string
+string s = b.to_string(); // "10110010"
+// bitset -> entero (cuidado con el tamano: to_ulong lanza excepcion si no cabe en unsigned long)
+unsigned long numUL = b.to_ulong();     // para bitsets pequenos (<=32 bits usualmente)
+unsigned long long numULL = b.to_ullong(); // para bitsets de hasta 64 bits
+// entero -> bitset (constructor directo)
+int x = 178;
+bitset<8> desdeEntero(x); // 10110010
+// string -> bitset (constructor directo)
+string binStr = "10110010";
+bitset<8> desdeString(binStr);
+// Tambien se puede construir desde un string con caracteres personalizados
+// (por ejemplo, usando '.'/'#' en vez de '0'/'1', util para leer mapas de grilla)
+string grid = "##..#.#.";
+bitset<8> desdeGrid(grid, 0, string::npos, '.', '#'); // '.' -> 0, '#' -> 1
+\end{lstlisting}
+\section{Casos de Uso de Bitmasking}
+\textbf{Complejidad de Tiempo:} varía según el caso, pero comparte el patrón de representar un subconjunto o estado con los bits de un entero. \\
+Además del DP con bitmask ya visto (TSP), estos son los usos más frecuentes en competencia:
+\subsubsection{Representar Visitados / Subconjuntos en Grafos Pequeños}
+Cuando $N \leq 20$-$22$, un entero puede representar qué nodos ya se visitaron, permitiendo DP sobre subconjuntos como estado.
+\begin{lstlisting}
+// Contar caminos hamiltonianos que empiezan en el nodo 0, en un grafo de N nodos
+int N; bool adj[20][20];
+ll dp[1 << 20][20]; // dp[mask][u] = caminos que visitan exactamente 'mask' y terminan en u
+ll contar_caminos_hamiltonianos() {
+    memset(dp, 0, sizeof(dp));
+    dp[1][0] = 1; // solo se visito el nodo 0
+    for (int mask = 1; mask < (1 << N); mask++) {
+        for (int u = 0; u < N; u++) {
+            if (!(mask & (1 << u)) || dp[mask][u] == 0) continue;
+            for (int v = 0; v < N; v++) {
+                if (adj[u][v] && !(mask & (1 << v))) {
+                    dp[mask | (1 << v)][v] += dp[mask][u];
+                }
+            }
+        }
+    }
+    ll total = 0;
+    for (int u = 0; u < N; u++) total += dp[(1 << N) - 1][u];
+    return total;
+}
+\end{lstlisting}
+\subsubsection{Problema de Asignación con Bitmask (Assignment Problem)}
+Asignar $N$ trabajadores a $N$ tareas minimizando el costo, cuando $N$ es pequeño ($\leq 20$). El bitmask representa qué tareas ya fueron asignadas.
+\begin{lstlisting}
+int N; int costo[20][20];
+int dpAsig[1 << 20]; // Inicializar en -1
+// dp(mask) = costo minimo de asignar las tareas prendidas en 'mask' a los primeros popcount(mask) trabajadores
+int asignacion_optima(int mask) {
+    int trabajador = __builtin_popcount(mask);
+    if (trabajador == N) return 0;
+    if (dpAsig[mask] != -1) return dpAsig[mask];
+    int mejor = INT_MAX;
+    for (int tarea = 0; tarea < N; tarea++) {
+        if (!(mask & (1 << tarea))) {
+            mejor = min(mejor, costo[trabajador][tarea] + asignacion_optima(mask | (1 << tarea)));
+        }
+    }
+    return dpAsig[mask] = mejor;
+}
+\end{lstlisting}
+\subsubsection{Subset Sum Acelerado con \texttt{bitset}}
+Acelera el clásico DP de subset sum de $\mathcal{O}(N \cdot W)$ a $\mathcal{O}(N \cdot W / 64)$ representando el conjunto de sumas alcanzables como un \texttt{bitset}, donde el bit $i$ indica si la suma $i$ es alcanzable.
+\begin{lstlisting}
+const int MAXW = 100005;
+bitset<MAXW> subset_sum_alcanzable(const vector<int>& pesos) {
+    bitset<MAXW> dp;
+    dp[0] = 1; // suma 0 siempre es alcanzable (no eligiendo nada)
+    for (int w : pesos) {
+        dp |= (dp << w); // para cada suma ya alcanzable s, ahora s+w tambien lo es
+    }
+    return dp; // dp[x] == 1 si existe un subconjunto que suma exactamente x
+}
+\end{lstlisting}
+\subsubsection{Contar Pares/Tripletas con Propiedades sobre Bits}
+Cuando se necesita saber, para cada máscara, cuántos elementos del arreglo tienen exactamente esos bits (o son submáscara/supermáscara de ella), se usa un arreglo indexado por máscara en vez de recorrer todo el arreglo cada vez.
+\begin{lstlisting}
+// cnt[mask] = cantidad de elementos del arreglo original iguales a 'mask'
+// Tras aplicar SOS DP (ver seccion anterior), cnt[mask] pasa a significar
+// "cantidad de elementos que son SUBMASCARA de mask"
+vector<ll> contar_por_mascara(const vector<int>& arr, int bits) {
+    vector<ll> cnt(1 << bits, 0);
+    for (int x : arr) cnt[x]++;
+    for (int bit = 0; bit < bits; bit++)
+        for (int mask = 0; mask < (1 << bits); mask++)
+            if (mask & (1 << bit)) cnt[mask] += cnt[mask ^ (1 << bit)];
+    return cnt;
+}
+\end{lstlisting}
+% =========================================================================
+\chapter{Matemáticas Teóricas}
+% =========================================================================
+\section{MCD (Máximo Común Divisor) y MCM (Mínimo Común Múltiplo)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(\log(\min(a, b)))$ \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(1)$ utilizando la función recursiva nativa o el algoritmo de Euclides. \\
+Implementación básica de GCD utilizando recursión y cálculo directo de LCM basándose en la identidad $a \cdot b = \gcd(a, b) \cdot \text{lcm}(a, b)$.
+\begin{lstlisting}
+// Nota: En C++17 existe std::gcd y std::lcm en la libreria <numeric>
+long long gcd(long long a, long long b) {
+    return b == 0 ? a : gcd(b, a % b);
+}
+long long lcm(long long a, long long b) {
+    if (a == 0 || b == 0) return 0;
+    return (a / gcd(a, b)) * b; // Evita el desbordamiento de enteros (overflow)
+}
+\end{lstlisting}
+\section{Algoritmo de Euclides Extendido}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(\log(\min(a, b)))$ \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(\log(\min(a, b)))$ debido a la pila de recursión. \\
+Halla los coeficientes enteros $x, y$ de la identidad de Bézout para resolver la ecuación lineal $ax + by = \gcd(a, b)$, lo cual sirve también para hallar el inverso multiplicativo modular.
+\begin{lstlisting}
+ll extgcd(ll a, ll b, ll &x, ll &y) {
+    if (b == 0) { x = 1; y = 0; return a; }
+    ll x1, y1;
+    ll d = extgcd(b, a % b, x1, y1);
+    x = y1; y = x1 - y1 * (a / b);
+    return d;
+}
+\end{lstlisting}
+\section{Criba de Eratóstenes (Sieve)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N \log \log N)$ \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N)$ \\
+Marca todos los números primos hasta $N$. La variante mostrada además calcula el menor factor primo (\textit{smallest prime factor}) de cada número, lo cual permite factorizar cualquier valor en $\mathcal{O}(\log N)$.
+\begin{lstlisting}
+const int MAXN = 1000006;
+vector<int> spf(MAXN); // menor factor primo de cada numero
+vector<int> primos;
+void sieve() {
+    for (int i = 2; i < MAXN; i++) {
+        if (spf[i] == 0) {
+            spf[i] = i;
+            primos.push_back(i);
+        }
+        for (int p : primos) {
+            if (p > spf[i] || (ll)i * p >= MAXN) break;
+            spf[i * p] = p;
+        }
+    }
+}
+// Factoriza n usando el sieve precalculado
+vector<int> factorizar(int n) {
+    vector<int> factores;
+    while (n > 1) { factores.push_back(spf[n]); n /= spf[n]; }
+    return factores;
+}
+\end{lstlisting}
+\section{Exponenciación Rápida (Fast/Modular Power)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(\log E)$, donde $E$ es el exponente. \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(1)$ (versión iterativa) \\
+Calcula $base^{exp} \mod m$ eficientemente mediante exponenciación binaria, evitando el cálculo directo de potencias enormes.
+\begin{lstlisting}
+ll modpow(ll base, ll exp, ll mod) {
+    ll result = 1;
+    base %= mod;
+    while (exp > 0) {
+        if (exp & 1) result = (result * base) % mod;
+        base = (base * base) % mod;
+        exp >>= 1;
+    }
+    return result;
+}
+\end{lstlisting}
+\section{Inverso Multiplicativo Modular}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(\log MOD)$ \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(1)$ \\
+Calcula el inverso de $a$ módulo $m$ (donde $m$ es primo) usando el Pequeño Teorema de Fermat: $a^{-1} \equiv a^{m-2} \pmod{m}$.
+\begin{lstlisting}
+const ll MOD = 1e9 + 7; // debe ser primo
+ll inv_mod(ll a) {
+    return modpow(a, MOD - 2, MOD);
+}
+\end{lstlisting}
+\section{Combinatoria: Factoriales y nCr con Módulo}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N \log MOD)$ para el precomputo, $\mathcal{O}(1)$ por consulta de $nCr$. \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N)$ \\
+Precalcula factoriales y sus inversos modulares para responder consultas de combinatoria ($nCr$, $nPr$) en tiempo constante.
+\begin{lstlisting}
+const int MAXF = 1000006;
+vector<ll> fact(MAXF), inv_fact(MAXF);
+void precalc_factoriales() {
+    fact[0] = 1;
+    for (int i = 1; i < MAXF; i++) fact[i] = (fact[i-1] * i) % MOD;
+    inv_fact[MAXF - 1] = inv_mod(fact[MAXF - 1]);
+    for (int i = MAXF - 2; i >= 0; i--) inv_fact[i] = (inv_fact[i+1] * (i+1)) % MOD;
+}
+ll nCr(int n, int r) {
+    if (r < 0 || r > n) return 0;
+    return fact[n] * inv_fact[r] % MOD * inv_fact[n-r] % MOD;
+}
+\end{lstlisting}
+\section{Test de Primalidad Miller-Rabin}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(k \log^3 N)$, donde $k$ es el número de rondas de testigos. \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(1)$ \\
+Test de primalidad probabilístico (determinístico para $N < 3.3 \times 10^{14}$ con los testigos mostrados) mucho más rápido que la división por tentativa para números grandes.
+\begin{lstlisting}
+ll mulmod(ll a, ll b, ll m) { return (__int128)a * b % m; }
+ll modpow128(ll base, ll exp, ll mod) {
+    ll result = 1; base %= mod;
+    while (exp > 0) {
+        if (exp & 1) result = mulmod(result, base, mod);
+        base = mulmod(base, base, mod);
+        exp >>= 1;
+    }
+    return result;
+}
+bool miller_rabin(ll n) {
+    if (n < 2) return false;
+    for (ll p : {2,3,5,7,11,13,17,19,23,29,31,37}) {
+        if (n % p == 0) return n == p;
+    }
+    ll d = n - 1; int r = 0;
+    while (d % 2 == 0) { d /= 2; r++; }
+    for (ll a : {2,3,5,7,11,13,17,19,23,29,31,37}) {
+        if (a >= n) continue;
+        ll x = modpow128(a, d, n);
+        if (x == 1 || x == n - 1) continue;
+        bool compuesto = true;
+        for (int i = 0; i < r - 1; i++) {
+            x = mulmod(x, x, n);
+            if (x == n - 1) { compuesto = false; break; }
+        }
+        if (compuesto) return false;
+    }
+    return true;
+}
+\end{lstlisting}
+\section{Teorema Chino del Resto (CRT) --- Implementación}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(K \log M)$, donde $K$ es la cantidad de congruencias. \\
+Resuelve el sistema $x \equiv r_i \pmod{m_i}$ combinando las congruencias de dos en dos con Euclides extendido. Funciona incluso si los $m_i$ NO son coprimos entre sí (a diferencia de la formulación clásica), siempre que el sistema sea consistente.
+\begin{lstlisting}
+// Combina x ≡ r1 (mod m1) y x ≡ r2 (mod m2) en una sola congruencia (mod lcm(m1,m2))
+// Retorna false si el sistema es inconsistente (sin solucion)
+bool crt_combinar(ll r1, ll m1, ll r2, ll m2, ll &r, ll &m) {
+    ll x, y;
+    ll g = extgcd(m1, m2, x, y); // reutiliza extgcd de la seccion anterior (con long long)
+    if ((r2 - r1) % g != 0) return false; // inconsistente
+    ll lcm_ = m1 / g * m2;
+    ll modulo = m2 / g;
+    ll despl = ((r2 - r1) / g % modulo * x % modulo + modulo) % modulo;
+    r = (r1 + m1 * despl) % lcm_;
+    if (r < 0) r += lcm_;
+    m = lcm_;
+    return true;
+}
+// Resuelve el sistema completo dado por vectores paralelos r[] y m[]
+bool crt(vector<ll>& r, vector<ll>& m, ll &resR, ll &resM) {
+    resR = 0; resM = 1;
+    for (int i = 0; i < (int)r.size(); i++) {
+        if (!crt_combinar(resR, resM, r[i], m[i], resR, resM)) return false;
+    }
+    return true;
+}
+\end{lstlisting}
+\section{Función de Möbius}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N \log \log N)$ para precalcular todos los valores hasta $N$ (criba lineal). \\
+Usada en técnicas de inclusión-exclusión sobre divisores, como contar pares coprimos.
+\begin{lstlisting}
+const int MAXM = 1000006;
+vector<int> mu(MAXM);
+void calcular_mobius() {
+    vector<int> spfLocal(MAXM, 0);
+    vector<int> primosLocal;
+    mu[1] = 1;
+    for (int i = 2; i < MAXM; i++) {
+        if (spfLocal[i] == 0) { spfLocal[i] = i; primosLocal.push_back(i); mu[i] = -1; }
+        for (int p : primosLocal) {
+            if (p > spfLocal[i] || (ll)i * p >= MAXM) break;
+            spfLocal[i * p] = p;
+            mu[i * p] = (p == spfLocal[i]) ? 0 : -mu[i];
+        }
+    }
+}
+// mu(n) = 0 si n tiene un factor primo al cuadrado
+// mu(n) = (-1)^k si n es producto de k primos distintos
+\end{lstlisting}
+\section{Fórmula de Legendre (Exponente de un Primo en $N!$)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(\log_p N)$ \\
+Calcula cuántas veces divide el primo $p$ a $N!$, sin calcular el factorial directamente. Útil para saber si $N!$ es divisible por algo, o para calcular $N! \mod p^k$.
+\begin{lstlisting}
+// Exponente de p en la factorizacion prima de n!
+ll legendre_exponente(ll n, ll p) {
+    ll cnt = 0;
+    while (n > 0) { n /= p; cnt += n; }
+    return cnt;
+}
+\end{lstlisting}
+% =========================================================================
+\chapter{Geometría Computacional}
+% =========================================================================
+\section{Primitivas Básicas: Punto, Producto Cruz y Punto}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(1)$ por operación \\
+Operaciones fundamentales sobre puntos 2D representados como pares $(x, y)$. El producto cruz determina la orientación relativa de tres puntos (giro izquierda/derecha/colineal).
+\begin{lstlisting}
+struct Point {
+    double x, y;
+    Point operator-(const Point& o) const { return {x - o.x, y - o.y}; }
+};
+// Producto cruz de (O->A) x (O->B). Positivo: giro antihorario (izquierda)
+double cross(const Point& O, const Point& A, const Point& B) {
+    return (A.x - O.x) * (B.y - O.y) - (A.y - O.y) * (B.x - O.x);
+}
+double dot(const Point& O, const Point& A, const Point& B) {
+    return (A.x - O.x) * (B.x - O.x) + (A.y - O.y) * (B.y - O.y);
+}
+double dist(const Point& A, const Point& B) {
+    return hypot(A.x - B.x, A.y - B.y);
+}
+\end{lstlisting}
+\section{Envolvente Convexa (Convex Hull - Andrew Monotone Chain)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N \log N)$, dominado por el ordenamiento de puntos. \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N)$ \\
+Calcula el polígono convexo más pequeño que contiene a todos los puntos dados, construyendo la cadena inferior y superior por separado.
+\begin{lstlisting}
+vector<Point> convex_hull(vector<Point> pts) {
+    int n = pts.size(), k = 0;
+    if (n < 3) return pts;
+    sort(pts.begin(), pts.end(), [](const Point& a, const Point& b) {
+        return a.x < b.x || (a.x == b.x && a.y < b.y);
+    });
+    vector<Point> hull(2 * n);
+    // Cadena inferior
+    for (int i = 0; i < n; i++) {
+        while (k >= 2 && cross(hull[k-2], hull[k-1], pts[i]) <= 0) k--;
+        hull[k++] = pts[i];
+    }
+    // Cadena superior
+    for (int i = n - 2, t = k + 1; i >= 0; i--) {
+        while (k >= t && cross(hull[k-2], hull[k-1], pts[i]) <= 0) k--;
+        hull[k++] = pts[i];
+    }
+    hull.resize(k - 1);
+    return hull;
+}
+\end{lstlisting}
+\section{Área y Punto Dentro de Polígono}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N)$ para ambas operaciones. \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(1)$ \\
+El área se calcula con la fórmula del \textit{shoelace}. La pertenencia de un punto se determina con el algoritmo de \textit{ray casting}, contando cuántas veces un rayo horizontal cruza los bordes del polígono.
+\begin{lstlisting}
+double poly_area(const vector<Point>& poly) {
+    double area = 0;
+    int n = poly.size();
+    for (int i = 0; i < n; i++) {
+        int j = (i + 1) % n;
+        area += poly[i].x * poly[j].y - poly[j].x * poly[i].y;
+    }
+    return fabs(area) / 2.0;
+}
+bool point_in_polygon(const Point& p, const vector<Point>& poly) {
+    int n = poly.size();
+    bool dentro = false;
+    for (int i = 0, j = n - 1; i < n; j = i++) {
+        bool cond = ((poly[i].y > p.y) != (poly[j].y > p.y)) &&
+            (p.x < (poly[j].x - poly[i].x) * (p.y - poly[i].y) / (poly[j].y - poly[i].y) + poly[i].x);
+        if (cond) dentro = !dentro;
+    }
+    return dentro;
+}
+\end{lstlisting}
+\section{Intersección de Segmentos}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(1)$ \\
+Determina si dos segmentos de recta se intersectan, cubriendo tanto el caso general (usando orientaciones/producto cruz) como los casos especiales colineales.
+\begin{lstlisting}
+int orientation(const Point& p, const Point& q, const Point& r) {
+    double val = cross(p, q, r);
+    if (fabs(val) < 1e-9) return 0; // colineales
+    return (val > 0) ? 1 : 2; // 1: antihorario, 2: horario
+}
+bool on_segment(const Point& p, const Point& q, const Point& r) {
+    return q.x <= max(p.x, r.x) && q.x >= min(p.x, r.x) &&
+           q.y <= max(p.y, r.y) && q.y >= min(p.y, r.y);
+}
+bool segments_intersect(const Point& p1, const Point& q1, const Point& p2, const Point& q2) {
+    int o1 = orientation(p1, q1, p2), o2 = orientation(p1, q1, q2);
+    int o3 = orientation(p2, q2, p1), o4 = orientation(p2, q2, q1);
+    if (o1 != o2 && o3 != o4) return true; // caso general
+    if (o1 == 0 && on_segment(p1, p2, q1)) return true;
+    if (o2 == 0 && on_segment(p1, q2, q1)) return true;
+    if (o3 == 0 && on_segment(p2, p1, q2)) return true;
+    if (o4 == 0 && on_segment(p2, q1, q2)) return true;
+    return false;
+}
+\end{lstlisting}
+\section{Punto de Intersección de Dos Rectas}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(1)$ \\
+Calcula el punto exacto donde se cruzan dos rectas (no segmentos) definidas cada una por dos puntos. Si las rectas son paralelas, el determinante da cero y no hay solución única.
+\begin{lstlisting}
+// Retorna true si existe interseccion unica; el resultado se guarda en 'out'
+bool line_intersection(const Point& p1, const Point& p2,
+                        const Point& p3, const Point& p4, Point& out) {
+    double a1 = p2.y - p1.y, b1 = p1.x - p2.x;
+    double c1 = a1 * p1.x + b1 * p1.y;
+    double a2 = p4.y - p3.y, b2 = p3.x - p4.x;
+    double c2 = a2 * p3.x + b2 * p3.y;
+    double det = a1 * b2 - a2 * b1;
+    if (fabs(det) < 1e-9) return false; // rectas paralelas o coincidentes
+    out.x = (b2 * c1 - b1 * c2) / det;
+    out.y = (a1 * c2 - a2 * c1) / det;
+    return true;
+}
+\end{lstlisting}
+\section{Distancia Punto-Recta y Punto-Segmento}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(1)$ \\
+La distancia a la \textbf{recta} usa la proyección normal (magnitud del producto cruz normalizada). La distancia al \textbf{segmento} requiere primero verificar si la proyección cae dentro del segmento; si no, la distancia mínima es hacia uno de sus extremos.
+\begin{lstlisting}
+double dist_point_line(const Point& p, const Point& A, const Point& B) {
+    return fabs(cross(A, B, p)) / dist(A, B);
+}
+double dist_point_segment(const Point& p, const Point& A, const Point& B) {
+    if (A.x == B.x && A.y == B.y) return dist(p, A); // segmento degenerado
+    double t = dot(A, B, p) / (dist(A, B) * dist(A, B)); // parametro de proyeccion
+    if (t < 0) return dist(p, A);       // la proyeccion cae antes de A
+    if (t > 1) return dist(p, B);       // la proyeccion cae despues de B
+    Point proj = {A.x + t * (B.x - A.x), A.y + t * (B.y - A.y)};
+    return dist(p, proj);
+}
+\end{lstlisting}
+\section{Círculos: Pertenencia e Intersección}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(1)$ \\
+Verifica si un punto está dentro de un círculo y calcula los (hasta 2) puntos de intersección entre dos circunferencias, usando la distancia entre centros para descartar los casos sin solución (muy separados o uno contenido en el otro).
+\begin{lstlisting}
+struct Circle { Point c; double r; };
+bool point_in_circle(const Point& p, const Circle& circ) {
+    return dist(p, circ.c) <= circ.r + 1e-9;
+}
+// Retorna 0, 1 o 2 puntos de interseccion entre dos circunferencias
+vector<Point> circle_circle_intersection(const Circle& c1, const Circle& c2) {
+    double d = dist(c1.c, c2.c);
+    if (d > c1.r + c2.r + 1e-9 || d < fabs(c1.r - c2.r) - 1e-9 || d < 1e-9)
+        return {}; // sin interseccion (muy lejos, uno dentro del otro, o concentricos)
+    double a = (c1.r*c1.r - c2.r*c2.r + d*d) / (2*d);
+    double h2 = c1.r*c1.r - a*a;
+    double h = (h2 > 0) ? sqrt(h2) : 0;
+    Point p2 = { c1.c.x + a*(c2.c.x-c1.c.x)/d, c1.c.y + a*(c2.c.y-c1.c.y)/d };
+    Point offset = { -(c2.c.y-c1.c.y) * (h/d), (c2.c.x-c1.c.x) * (h/d) };
+    Point i1 = { p2.x + offset.x, p2.y + offset.y };
+    Point i2 = { p2.x - offset.x, p2.y - offset.y };
+    if (h < 1e-9) return {i1}; // tangentes: un solo punto
+    return {i1, i2};
+}
+\end{lstlisting}
+\section{Par de Puntos Más Cercano (Closest Pair)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N \log N)$ mediante divide y vencerás. \\
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N)$ \\
+Encuentra la distancia mínima entre dos puntos de un conjunto. Divide el conjunto ordenado por $x$ en dos mitades, resuelve recursivamente y combina revisando solo una franja estrecha alrededor de la línea divisoria.
+\begin{lstlisting}
+inline double dist2(const Point& a, const Point& b) {
+    double dx = a.x - b.x, dy = a.y - b.y;
+    return dx * dx + dy * dy;
+}
+
+double closest_pair_rec(vector<Point>& pts, int l, int r) {
+    if (r - l <= 3) {
+        double best2 = 1e100;
+        for (int i = l; i < r; i++)
+            for (int j = i + 1; j < r; j++)
+                best2 = min(best2, dist2(pts[i], pts[j]));
+        sort(pts.begin() + l, pts.begin() + r,
+             [](const Point& a, const Point& b) { return a.y < b.y; });
+        return best2;
+    }
+
+    int mid = (l + r) / 2;
+    double midX = pts[mid].x;
+    double d2 = min(closest_pair_rec(pts, l, mid),
+                    closest_pair_rec(pts, mid, r));
+
+    inplace_merge(pts.begin() + l, pts.begin() + mid, pts.begin() + r,
+                  [](const Point& a, const Point& b) { return a.y < b.y; });
+
+    vector<Point> strip;
+    strip.reserve(r - l);
+    for (int i = l; i < r; i++) {
+        double dx = pts[i].x - midX;
+        if (dx * dx < d2) strip.push_back(pts[i]);
+    }
+
+    for (int i = 0; i < (int)strip.size(); i++) {
+        for (int j = i + 1; j < (int)strip.size(); j++) {
+            double dy = strip[j].y - strip[i].y;
+            if (dy * dy >= d2) break;
+            d2 = min(d2, dist2(strip[i], strip[j]));
+        }
+    }
+    return d2;
+}
+
+double closest_pair(vector<Point> pts) {
+    sort(pts.begin(), pts.end(),
+         [](const Point& a, const Point& b) {
+             return a.x < b.x || (a.x == b.x && a.y < b.y);
+         });
+    return sqrt(closest_pair_rec(pts, 0, (int)pts.size()));
+}
+\end{lstlisting}
+\section{Rotating Calipers: Diámetro de un Conjunto de Puntos}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N \log N)$ (dominado por el cálculo del convex hull; el barrido de calipers en sí es $\mathcal{O}(N)$). \\
+Calcula la distancia máxima entre dos puntos del conjunto. Se apoya en que el par más lejano siempre son dos vértices del \textit{convex hull}, y recorre pares de "puntas" opuestas girando alrededor del polígono.
+\begin{lstlisting}
+double poly_diameter(vector<Point> pts) {
+    vector<Point> hull = convex_hull(pts); // definido en la seccion de Convex Hull
+    int n = hull.size();
+    if (n == 1) return 0;
+    if (n == 2) return dist(hull[0], hull[1]);
+    double best = 0;
+    int j = 1;
+    for (int i = 0; i < n; i++) {
+        int ni = (i + 1) % n;
+        while (fabs(cross(hull[i], hull[ni], hull[(j+1)%n])) >
+               fabs(cross(hull[i], hull[ni], hull[j]))) {
+            j = (j + 1) % n;
+        }
+        best = max({best, dist(hull[i], hull[j]), dist(hull[ni], hull[j])});
+    }
+    return best;
+}
+\end{lstlisting}
+\section{Ordenamiento Angular (Radial Sort) y Convexidad}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(N \log N)$ para el ordenamiento; $\mathcal{O}(N)$ para verificar convexidad. \\
+Ordenar puntos por ángulo alrededor de un pivote es la base de algoritmos como Graham Scan. También se muestra cómo verificar si un polígono ya dado es convexo revisando que todos los giros consecutivos tengan el mismo signo.
+\begin{lstlisting}
+// Ordena 'pts' por angulo polar alrededor de 'pivot' (sin usar atan2, mas preciso)
+void sort_by_angle(vector<Point>& pts, const Point& pivot) {
+    sort(pts.begin(), pts.end(), [&](const Point& a, const Point& b) {
+        bool halfA = (a.y > pivot.y) || (a.y == pivot.y && a.x > pivot.x);
+        bool halfB = (b.y > pivot.y) || (b.y == pivot.y && b.x > pivot.x);
+        if (halfA != halfB) return halfA > halfB; // parte superior primero
+        double c = cross(pivot, a, b);
+        if (fabs(c) > 1e-9) return c > 0;
+        return dist(pivot, a) < dist(pivot, b); // desempate: mas cercano primero
+    });
+}
+bool is_convex_polygon(const vector<Point>& poly) {
+    int n = poly.size();
+    if (n < 3) return false;
+    bool gotPositive = false, gotNegative = false;
+    for (int i = 0; i < n; i++) {
+        double c = cross(poly[i], poly[(i+1)%n], poly[(i+2)%n]);
+        if (c > 1e-9) gotPositive = true;
+        if (c < -1e-9) gotNegative = true;
+        if (gotPositive && gotNegative) return false; // cambia de signo: no convexo
+    }
+    return true;
+}
+\end{lstlisting}
+\section{Interpolación de Hermite (Cúbica)}
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(1)$ por evaluación de punto. \\
+Construye una curva suave que pasa \textbf{exactamente} por un conjunto de puntos dados, especificando además la tangente (dirección/velocidad) en cada uno. A diferencia de interpolar con un polinomio único (que oscila mucho con muchos puntos, fenómeno de Runge), Hermite trabaja \textit{tramo por tramo} entre puntos consecutivos, garantizando continuidad de posición y primera derivada.
+\begin{lstlisting}
+// Funciones base de Hermite cubico (Point definido en la seccion de Primitivas)
+double h00(double t) { return 2*t*t*t - 3*t*t + 1; }
+double h10(double t) { return t*t*t - 2*t*t + t; }
+double h01(double t) { return -2*t*t*t + 3*t*t; }
+double h11(double t) { return t*t*t - t*t; }
+// Evalua el punto en t in [0,1] entre p0 y p1, dadas las tangentes m0 y m1
+Point hermite_interp(const Point& p0, const Point& m0,
+                      const Point& p1, const Point& m1, double t) {
+    double H00 = h00(t), H10 = h10(t), H01 = h01(t), H11 = h11(t);
+    return {
+        H00*p0.x + H10*m0.x + H01*p1.x + H11*m1.x,
+        H00*p0.y + H10*m0.y + H01*p1.y + H11*m1.y
+    };
+}
+\end{lstlisting}
+\subsubsection{Catmull-Rom: Tangentes Automáticas}
+Cuando no se dan tangentes explícitas, \textbf{Catmull-Rom} las calcula automáticamente a partir de los puntos vecinos, produciendo una curva suave que pasa por todos los puntos dados sin necesidad de configurar nada más. Es la forma más práctica de usar Hermite en la mayoría de los problemas (animación de rutas, suavizado de trayectorias).
+\begin{lstlisting}
+// Genera tangentes automaticas: tangente_i = (p_{i+1} - p_{i-1}) / 2
+vector<Point> catmull_rom_tangents(const vector<Point>& pts) {
+    int n = pts.size();
+    vector<Point> tan(n);
+    for (int i = 0; i < n; i++) {
+        Point prev = (i == 0) ? pts[i] : pts[i-1];
+        Point next = (i == n-1) ? pts[i] : pts[i+1];
+        tan[i] = { (next.x - prev.x) / 2.0, (next.y - prev.y) / 2.0 };
+    }
+    return tan;
+}
+// Evalua un punto en la curva Catmull-Rom completa, con u en el rango [0, n-1]
+// (u = 2.3 significa "30% del camino entre el punto 2 y el punto 3")
+Point catmull_rom_eval(const vector<Point>& pts, const vector<Point>& tan, double u) {
+    int i = min((int)u, (int)pts.size() - 2);
+    double t = u - i;
+    return hermite_interp(pts[i], tan[i], pts[i+1], tan[i+1], t);
+}
+\end{lstlisting}
+\section{Spline Cúbico Natural}
+\textbf{Complejidad de Tiempo:}
+\begin{itemize}
+    \item \textbf{Construcción:} $\mathcal{O}(N)$ (resuelve un sistema tridiagonal)
+    \item \textbf{Evaluación:} $\mathcal{O}(\log N)$ usando búsqueda binaria para ubicar el tramo (ver capítulo de \textit{Lower Bound y Upper Bound})
+\end{itemize}
+\textbf{Complejidad de Espacio:} $\mathcal{O}(N)$ \\
+A diferencia de Hermite (que requiere tangentes dadas o estimadas), el spline cúbico natural resuelve un sistema de ecuaciones para que la curva tenga \textbf{segunda derivada continua} en todos los puntos, y además fuerza segunda derivada $= 0$ en los extremos (condición "natural"). Requiere que los puntos $x_i$ estén \textbf{ordenados y sean distintos} (es una función $y = f(x)$, no una curva paramétrica general).
+\begin{lstlisting}
+struct CubicSpline {
+    vector<double> x, a, b, c, d;
+    int n;
+    // xs debe estar ordenado estrictamente creciente
+    CubicSpline(const vector<double>& xs, const vector<double>& ys) {
+        n = xs.size() - 1;
+        x = xs; a = ys;
+        b.assign(n + 1, 0); c.assign(n + 1, 0); d.assign(n + 1, 0);
+        vector<double> h(n), alpha(n + 1, 0);
+        for (int i = 0; i < n; i++) h[i] = x[i+1] - x[i];
+        for (int i = 1; i < n; i++)
+            alpha[i] = 3.0*(a[i+1]-a[i])/h[i] - 3.0*(a[i]-a[i-1])/h[i-1];
+        // Resuelve el sistema tridiagonal para los coeficientes 'c' (segundas derivadas/6)
+        vector<double> l(n + 1), mu(n + 1), z(n + 1);
+        l[0] = 1; mu[0] = 0; z[0] = 0;
+        for (int i = 1; i < n; i++) {
+            l[i] = 2*(x[i+1] - x[i-1]) - h[i-1]*mu[i-1];
+            mu[i] = h[i] / l[i];
+            z[i] = (alpha[i] - h[i-1]*z[i-1]) / l[i];
+        }
+        l[n] = 1; z[n] = 0; c[n] = 0;
+        for (int j = n - 1; j >= 0; j--) {
+            c[j] = z[j] - mu[j]*c[j+1];
+            b[j] = (a[j+1]-a[j])/h[j] - h[j]*(c[j+1] + 2*c[j])/3.0;
+            d[j] = (c[j+1] - c[j]) / (3.0*h[j]);
+        }
+    }
+    // Evalua el spline en xq (busqueda binaria del tramo correspondiente)
+    double eval(double xq) {
+        int i = upper_bound(x.begin(), x.end(), xq) - x.begin() - 1;
+        i = max(0, min(i, n - 1));
+        double dx = xq - x[i];
+        return a[i] + b[i]*dx + c[i]*dx*dx + d[i]*dx*dx*dx; // a + b*dx + c*dx^2 + d*dx^3
+    }
+};
+\end{lstlisting}
+% =========================================================================
+\chapter{Fórmulas Matemáticas Esenciales (Implementadas)}
+% =========================================================================
+Referencia rápida de fórmulas que aparecen con frecuencia en el planteamiento de problemas, ya traducidas a código C++ listo para copiar y adaptar.
+
+% -------------------------------------------------------------------------
+\section{Sumas y Series}
+% -------------------------------------------------------------------------
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(1)$ para todas las funciones de esta sección (fórmulas cerradas, sin iterar).
+\begin{lstlisting}
+// Suma de los primeros n naturales: 1+2+...+n = n(n+1)/2
+ll suma_naturales(ll n) { return n * (n + 1) / 2; }
+
+// Suma de los primeros n numeros impares: 1+3+5+...+(2n-1) = n^2
+ll suma_impares(ll n) { return n * n; }
+
+// Suma de cuadrados: 1^2+2^2+...+n^2 = n(n+1)(2n+1)/6
+ll suma_cuadrados(ll n) { return n * (n + 1) * (2 * n + 1) / 6; }
+
+// Suma de cubos: 1^3+2^3+...+n^3 = (n(n+1)/2)^2
+ll suma_cubos(ll n) { ll s = suma_naturales(n); return s * s; }
+
+// Suma de una progresion aritmetica con n terminos, primer termino a1, razon d
+ll suma_progresion_aritmetica(ll a1, ll d, ll n) {
+    ll an = a1 + (n - 1) * d; // ultimo termino
+    return n * (a1 + an) / 2;
+}
+
+// Suma de una progresion geometrica finita: a1 + a1*r + ... + a1*r^(n-1), r != 1
+// (usar modpow/inv_mod si se necesita modulo, ver capitulo de Matematicas Teoricas)
+double suma_geometrica(double a1, double r, ll n) {
+    if (r == 1) return a1 * n;
+    return a1 * (pow(r, n) - 1) / (r - 1);
+}
+
+// Suma geometrica infinita, |r| < 1
+double suma_geometrica_infinita(double a1, double r) {
+    return a1 / (1 - r);
+}
+
+// Aproximacion de la serie armonica: 1 + 1/2 + 1/3 + ... + 1/n
+// Util para estimar complejidad O(n log n) de cribas/divisores sin sumar termino a termino
+const double EULER_MASCHERONI = 0.5772156649;
+double serie_armonica_aprox(ll n) {
+    return log((double)n) + EULER_MASCHERONI;
+}
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{Combinatoria}
+% -------------------------------------------------------------------------
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(1)$ con \texttt{nCr} precalculado (ver \texttt{fact}/\texttt{inv\_fact} en el capítulo de Matemáticas Teóricas); $\mathcal{O}(N)$ para Catalan/derangements si se calculan en tabla.
+\begin{lstlisting}
+// Permutaciones sin repeticion: P(n,r) = n! / (n-r)!
+// Requiere fact[] e inv_fact[] precalculados (ver Combinatoria en Matematicas Teoricas)
+ll nPr(int n, int r) {
+    if (r < 0 || r > n) return 0;
+    return fact[n] * inv_fact[n - r] % MOD;
+}
+// Combinaciones: ya definido como nCr(n, r) en el capitulo de Matematicas Teoricas
+// (se repite aqui la firma como referencia): ll nCr(int n, int r);
+
+// Total de subconjuntos de un conjunto de n elementos: 2^n
+ll total_subconjuntos(int n) { return modpow(2, n, MOD); }
+
+// Combinaciones con repeticion (multiconjuntos de tamano r tomados de n tipos)
+ll combinaciones_con_repeticion(int n, int r) { return nCr(n + r - 1, r); }
+
+// Permutaciones con repeticion: n! / (n1! * n2! * ... * nk!)
+ll permutaciones_con_repeticion(int n, const vector<int>& grupos) {
+    ll res = fact[n];
+    for (int ni : grupos) res = res * inv_fact[ni] % MOD;
+    return res;
+}
+
+// Identidad de Vandermonde: C(m+n, r) = sum_{k=0}^{r} C(m,k)*C(n,r-k)
+// Sirve como checksum/derivacion; rara vez se usa directamente en codigo,
+// pero se implementa por si se necesita validar o calcular de forma indirecta
+ll vandermonde(int m, int n, int r) {
+    ll res = 0;
+    for (int k = 0; k <= r; k++) res = (res + nCr(m, k) * nCr(n, r - k)) % MOD;
+    return res;
+}
+
+// Identidad del palo de hockey: sum_{i=r}^{n} C(i, r) = C(n+1, r+1)
+// (evita sumar n-r terminos; calcular directo con nCr(n+1, r+1))
+ll hockey_stick(int n, int r) { return nCr(n + 1, r + 1); }
+
+// Numero de derangements (permutaciones sin puntos fijos), via recurrencia
+// D_n = (n-1) * (D_{n-1} + D_{n-2}), D_0 = 1, D_1 = 0
+vector<ll> tabla_derangements(int n) {
+    vector<ll> D(n + 1);
+    D[0] = 1; if (n >= 1) D[1] = 0;
+    for (int i = 2; i <= n; i++)
+        D[i] = (ll)(i - 1) * ((D[i-1] + D[i-2]) % MOD) % MOD;
+    return D;
+}
+
+// Números de Catalan. La recurrencia cuadrática es correcta, pero innecesaria
+// cuando n < MOD: C_i = C_{i-1} * (4i-2) / (i+1).
+vector<ll> tabla_catalan(int n) {
+    vector<ll> C(n + 1, 0);
+    C[0] = 1;
+    for (int i = 1; i <= n; i++) {
+        // Requiere i + 1 < MOD para usar inv_mod.
+        C[i] = C[i - 1] * (4LL * i - 2) % MOD * inv_mod(i + 1) % MOD;
+    }
+    return C;
+}
+// Version O(1) por consulta usando factoriales precalculados:
+ll catalan_directo(int n) {
+    return (nCr(2 * n, n) - nCr(2 * n, n + 1) % MOD + MOD) % MOD;
+}
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{Geometría}
+% -------------------------------------------------------------------------
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(1)$ por fórmula (ver también el capítulo de Geometría Computacional para \texttt{Point}, \texttt{cross}, \texttt{dist}, convex hull, etc.).
+\begin{lstlisting}
+// Area de triangulo con formula de Heron (lados a, b, c)
+double area_triangulo_heron(double a, double b, double c) {
+    double s = (a + b + c) / 2.0;
+    return sqrt(s * (s - a) * (s - b) * (s - c));
+}
+
+// Area de triangulo por coordenadas (shoelace de 3 puntos)
+double area_triangulo_coords(double x1, double y1, double x2, double y2, double x3, double y3) {
+    return fabs(x1*(y2-y3) + x2*(y3-y1) + x3*(y1-y2)) / 2.0;
+}
+
+// Area de trapecio (bases b1, b2, altura h)
+double area_trapecio(double b1, double b2, double h) { return (b1 + b2) * h / 2.0; }
+
+// Area de poligono regular de n lados de longitud l
+double area_poligono_regular(int n, double l) {
+    return (n * l * l) / (4.0 * tan(M_PI / n));
+}
+
+// Teorema de Pitagoras: dado a y b, obtener hipotenusa; o despejar un cateto
+double hipotenusa(double a, double b) { return sqrt(a*a + b*b); }
+double cateto(double hip, double otroCateto) { return sqrt(hip*hip - otroCateto*otroCateto); }
+
+// Ley de cosenos: c^2 = a^2 + b^2 - 2ab*cos(C), con C en radianes
+double ley_cosenos(double a, double b, double anguloC_rad) {
+    return sqrt(a*a + b*b - 2*a*b*cos(anguloC_rad));
+}
+// Despejar el angulo C conocidos los 3 lados
+double angulo_desde_lados(double a, double b, double c) {
+    return acos((a*a + b*b - c*c) / (2*a*b)); // en radianes
+}
+
+// Ley de senos: a/sin(A) = b/sin(B) = c/sin(C). Dado un lado y su angulo opuesto,
+// mas otro angulo, obtener el lado faltante.
+double ley_senos_lado(double ladoConocido, double anguloOpuestoConocido_rad, double anguloOpuestoBuscado_rad) {
+    return ladoConocido * sin(anguloOpuestoBuscado_rad) / sin(anguloOpuestoConocido_rad);
+}
+
+// Distancia entre dos puntos (ver tambien dist(Point,Point) en Geometria Computacional)
+double distancia_2d(double x1, double y1, double x2, double y2) {
+    return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+}
+
+// Circulo: perimetro y area
+double circulo_perimetro(double r) { return 2.0 * M_PI * r; }
+double circulo_area(double r) { return M_PI * r * r; }
+
+// Esfera: volumen y area superficial
+double esfera_volumen(double r) { return (4.0/3.0) * M_PI * r * r * r; }
+double esfera_area(double r) { return 4.0 * M_PI * r * r; }
+
+// Cilindro: volumen y area total (2 tapas + lateral)
+double cilindro_volumen(double r, double h) { return M_PI * r * r * h; }
+double cilindro_area_total(double r, double h) { return 2*M_PI*r*h + 2*M_PI*r*r; }
+
+// Cono: volumen y area lateral (g = generatriz = sqrt(r^2 + h^2))
+double cono_volumen(double r, double h) { return (M_PI * r * r * h) / 3.0; }
+double cono_area_lateral(double r, double h) {
+    double g = sqrt(r*r + h*h);
+    return M_PI * r * g;
+}
+
+// Teorema de Pick: Area = I + B/2 - 1
+// I = puntos enteros interiores, B = puntos enteros en el borde
+double pick_area(ll puntosInteriores, ll puntosBorde) {
+    return puntosInteriores + puntosBorde / 2.0 - 1.0;
+}
+// Puntos enteros estrictamente entre dos vertices de coordenadas enteras (para calcular B)
+ll puntos_enteros_en_segmento(ll x1, ll y1, ll x2, ll y2) {
+    return __gcd(llabs(x2 - x1), llabs(y2 - y1)) - 1;
+}
+// Dado el area (ej. por shoelace) y el borde B, despejar los puntos interiores I
+ll pick_puntos_interiores(double area, ll puntosBorde) {
+    return (ll)llround(area - puntosBorde / 2.0 + 1.0);
+}
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{Probabilidad y Recurrencias}
+% -------------------------------------------------------------------------
+\textbf{Complejidad de Tiempo:} $\mathcal{O}(1)$ para las fórmulas puntuales; $\mathcal{O}(\log n)$ para Fibonacci vía exponenciación de matrices.
+\begin{lstlisting}
+// Esperanza de la suma: E[X+Y] = E[X] + E[Y] (SIEMPRE se cumple, sin importar independencia)
+double esperanza_suma(const vector<double>& esperanzasIndividuales) {
+    double total = 0;
+    for (double e : esperanzasIndividuales) total += e;
+    return total;
+}
+
+// Varianza: Var(X) = E[X^2] - (E[X])^2
+double varianza(const vector<double>& valores, const vector<double>& probabilidades) {
+    double EX = 0, EX2 = 0;
+    for (int i = 0; i < (int)valores.size(); i++) {
+        EX  += valores[i] * probabilidades[i];
+        EX2 += valores[i] * valores[i] * probabilidades[i];
+    }
+    return EX2 - EX * EX;
+}
+
+// Teorema de Bayes: P(A|B) = P(B|A) * P(A) / P(B)
+double bayes(double pB_dado_A, double pA, double pB) {
+    return (pB_dado_A * pA) / pB;
+}
+
+// Probabilidad total: P(A) = sum_i P(A|Bi) * P(Bi)
+// pA_dado_B[i] y pB[i] son vectores paralelos, uno por cada evento Bi del particionamiento
+double probabilidad_total(const vector<double>& pA_dado_B, const vector<double>& pB) {
+    double res = 0;
+    for (int i = 0; i < (int)pA_dado_B.size(); i++) res += pA_dado_B[i] * pB[i];
+    return res;
+}
+
+// Inclusion-exclusion general para n conjuntos, dado |interseccion de cualquier subconjunto S|
+// como funcion interseccion(S) donde S es una mascara de bits (que conjuntos intervienen)
+// |Union| = sum sobre todas las submascaras no vacias, con signo (-1)^(|S|+1)
+template <typename F>
+ll inclusion_exclusion(int n, F interseccion) {
+    ll total = 0;
+    for (int mask = 1; mask < (1 << n); mask++) {
+        int bits = __builtin_popcount(mask);
+        ll inter = interseccion(mask);
+        total += (bits % 2 == 1) ? inter : -inter;
+    }
+    return total;
+}
+// Caso base con 2 conjuntos: |A U B| = |A| + |B| - |A ^ B|
+ll union_dos_conjuntos(ll tamA, ll tamB, ll tamInterseccion) {
+    return tamA + tamB - tamInterseccion;
+}
+
+// Fibonacci: formula cerrada (Binet) -- ojo con precision para n grande, mejor usar matrices
+double fibonacci_binet(int n) {
+    const double phi = (1.0 + sqrt(5.0)) / 2.0;
+    const double psi = (1.0 - sqrt(5.0)) / 2.0;
+    return round((pow(phi, n) - pow(psi, n)) / sqrt(5.0));
+}
+
+// Fibonacci mod M en O(log n) via exponenciacion de matrices 2x2
+// [[F(n+1), F(n)], [F(n), F(n-1)]] = [[1,1],[1,0]]^n
+struct Mat2 { ll a, b, c, d; };
+Mat2 matmul(const Mat2& X, const Mat2& Y, ll mod) {
+    return {
+        (X.a*Y.a + X.b*Y.c) % mod, (X.a*Y.b + X.b*Y.d) % mod,
+        (X.c*Y.a + X.d*Y.c) % mod, (X.c*Y.b + X.d*Y.d) % mod
+    };
+}
+ll fibonacci_matriz(ll n, ll mod) {
+    if (n == 0) return 0;
+    Mat2 result = {1, 0, 0, 1}; // identidad
+    Mat2 base = {1, 1, 1, 0};
+    ll e = n;
+    while (e > 0) {
+        if (e & 1) result = matmul(result, base, mod);
+        base = matmul(base, base, mod);
+        e >>= 1;
+    }
+    return result.b; // F(n) queda en la posicion [0][1]
+}
+\end{lstlisting}
+
+% -------------------------------------------------------------------------
+\section{Teorema Maestro (guía de referencia, no se codea)}
+% -------------------------------------------------------------------------
+Para recurrencias tipo $T(n) = a \cdot T(n/b) + f(n)$ con $f(n) = \mathcal{O}(n^d)$, esto no se implementa (es una herramienta de análisis en papel), pero conviene tenerlo a mano para estimar la complejidad de un divide y vencerás antes de programarlo:
+\begin{lstlisting}
+// Guia rapida (comparar d contra log_b(a)):
+//   d <  log_b(a)  ->  T(n) = O(n^(log_b a))
+//   d == log_b(a)  ->  T(n) = O(n^d * log n)
+//   d >  log_b(a)  ->  T(n) = O(n^d)
+// Ejemplo: Merge Sort -> T(n) = 2T(n/2) + O(n)  =>  a=2, b=2, d=1, log_2(2)=1 => O(n log n)
+// Ejemplo: Karatsuba  -> T(n) = 3T(n/2) + O(n)  =>  a=3, b=2, d=1, log_2(3)=1.58 => O(n^1.58)
+double log_b(double a, double b) { return log(a) / log(b); } // ayuda a comparar d vs log_b(a)
+\end{lstlisting}
+\chapter{Casos de Estudio: Problemas Resueltos}
+% =========================================================================
+\section{Matrioshka}
+\begin{lstlisting}
+#include <bits/stdc++.h>
+#include <sstream>
+#include <string>
+using namespace std;
+int main() {
+    string a;
+    while(getline(cin, a)) {
+        stringstream ss(a);
+        stack<int> mat;
+        stack<int> sumcajas;
+        bool rot = false;
+        int c;
+        while(ss >> c) {
+            if(c < 0) {
+                mat.push(-c);
+                sumcajas.push(0);
+            }
+            else if(!rot) {
+                if(mat.empty() || mat.top() != c) {
+                    rot = true;
+                }
+                else {
+                    mat.pop();
+                    int hijos = sumcajas.top();
+                    sumcajas.pop();
+                    if(hijos >= c) {
+                        rot = true;
+                    }
+                    else if(!sumcajas.empty()) {
+                        int padre = sumcajas.top();
+                        sumcajas.pop();
+                        sumcajas.push(padre + c);
+                    }
+                }
+            }
+        }
+        if(!mat.empty()) rot = true;
+        if(rot) cout << ":-( Try again." << endl;
+        else cout << ":-) Matrioshka!" << endl;
+    }
+}
+\end{lstlisting}
+
+% =========================================================================
+% CAPITULO EXTRA: APLICACIONES SENCILLAS
+% =========================================================================
+\chapter{Aplicaciones Sencillas de Cada Código}
+Esta sección muestra cómo pasar de la plantilla de la biblioteca a un problema
+pequeño. La idea no es memorizar el ejemplo exacto, sino identificar qué datos
+entran, qué función se llama y qué información devuelve. Cada bloque de la
+biblioteca tiene aquí una aplicación correspondiente.
+
+\section{Aplicación 1: Configuración Inicial (Template C++)}
+Usa esta plantilla cuando empieces un problema de concurso: activa I/O rápido y deja un punto claro para la solución.
+
+\begin{lstlisting}
+int main() {
+    fastio;
+    int n;
+    cin >> n;
+    // Resolver el problema...
+    return 0;
+}
+\end{lstlisting}
+
+\section{Aplicación 2: Lectura Eficiente (Fast I/O)}
+Úsalo cuando el juez entrega cientos de miles o millones de datos.
+
+\begin{lstlisting}
+int n;
+cin >> n;
+vector<int> a(n);
+for (int &x : a) cin >> x;
+cout << a[0] << '\\n';
+\end{lstlisting}
+
+\section{Aplicación 3: Lectura Eficiente (Fast I/O) (ejemplo 2)}
+Lee datos de entrada de forma cómoda y rápida.
+
+\begin{lstlisting}
+int n; cin >> n;
+vector<int> a(n);
+for (int &x : a) cin >> x;
+\end{lstlisting}
+
+\section{Aplicación 4: Búsqueda Binaria (Algoritmo Floor)}
+Ejemplo: encontrar el precio más alto que no supera un presupuesto.
+
+\begin{lstlisting}
+vector<int> precios = {10, 20, 35, 50, 80};
+int presupuesto = 42;
+int pos = binary_search_floor(precios, presupuesto);
+// pos = 2, porque precios[2] = 35
+cout << precios[pos];
+\end{lstlisting}
+
+\section{Aplicación 5: Fenwick Tree (Binary Indexed Tree)}
+Ejemplo: guardar ventas diarias, actualizar un día y consultar la suma de un intervalo.
+
+\begin{lstlisting}
+BIT bit(5);
+for (int i = 1; i <= 5; i++) bit.update(i, i * 10);
+
+bit.update(3, 25);          // sumar 25 al dia 3
+cout << bit.query(2, 4);    // suma de los dias 2..4
+\end{lstlisting}
+
+\section{Aplicación 6: Segment Tree (Consultas por Rangos)}
+Ejemplo: cambiar el valor de un elemento y preguntar la suma de cualquier intervalo.
+
+\begin{lstlisting}
+SegTree st(5);
+st.update(0, 10);
+st.update(1, 20);
+st.update(2, 30);
+cout << st.query(0, 3);     // 10 + 20 + 30
+\end{lstlisting}
+
+\section{Aplicación 7: Segment Tree con Lazy Propagation}
+Ejemplo: aumentar todos los salarios de un rango de empleados sin actualizarlos uno por uno.
+
+\begin{lstlisting}
+SegTreeLazy st(5);
+
+// Sumar 100 a los empleados 1..3
+st.updateRange(1, 0, 4, 1, 3, 100);
+
+cout << st.queryRange(1, 0, 4, 1, 3);
+\end{lstlisting}
+
+\section{Aplicación 8: Merge Sort Tree}
+Ejemplo: contar cuántos valores menores que K aparecen dentro de un intervalo.
+
+\begin{lstlisting}
+vector<int> a = {8, 2, 7, 3, 5};
+MergeSortTree mst(a.size());
+mst.build(a, 1, 0, a.size() - 1);
+
+// ¿Cuantos valores menores que 6 hay entre indices 1 y 4?
+cout << mst.query(1, 0, 4, 1, 4, 6);
+\end{lstlisting}
+
+\section{Aplicación 9: Sparse Table (RMQ Estático)}
+Ejemplo: consultar rápidamente la temperatura mínima entre dos días cuando el arreglo no cambia.
+
+\begin{lstlisting}
+vector<int> temperatura = {30, 25, 28, 20, 35};
+SparseTable st(temperatura);
+
+cout << st.query(1, 4);      // minimo entre dias 1 y 4
+\end{lstlisting}
+
+\section{Aplicación 10: DSU con Unión por Tamaño (Rollback-Ready)}
+Ejemplo: unir ciudades y después deshacer una unión en un algoritmo offline.
+
+\begin{lstlisting}
+DSURollback dsu(6);
+
+dsu.unite(1, 2);
+dsu.unite(2, 3);
+
+cout << (dsu.find(1) == dsu.find(3)); // 1
+
+dsu.rollback(); // deshace la ultima union
+\end{lstlisting}
+
+\section{Aplicación 11: Trie (Árbol de Prefijos)}
+Ejemplo: guardar números y preguntar cuál produce el XOR máximo con un número dado.
+
+\begin{lstlisting}
+TrieXor trie;
+
+trie.insert(5);
+trie.insert(10);
+trie.insert(25);
+
+cout << trie.maxXor(7);
+\end{lstlisting}
+
+\section{Aplicación 12: Conceptos y Uso Básico en STL}
+Ejemplo sencillo de aplicación del bloque de código.
+
+\begin{lstlisting}
+// Preparar los datos del problema
+// Ejecutar el algoritmo de esta seccion
+// Mostrar el resultado
+\end{lstlisting}
+
+\section{Aplicación 13: Conceptos y Uso Básico en STL (ejemplo 2)}
+Ejemplo directo de uso de cnt\_le sobre datos pequeños para ver qué resultado produce.
+
+\begin{lstlisting}
+// Datos de ejemplo
+// cnt_le(...);
+cout << "Resultado obtenido por cnt_le";
+\end{lstlisting}
+
+\section{Aplicación 14: Búsqueda con Comparador Personalizado}
+Busca un elemento dentro de una estructura ordenada usando el campo que nos interesa.
+
+\begin{lstlisting}
+auto it = lower_bound(gente.begin(), gente.end(), 20,
+    [](const Persona& p, int x) { return p.edad < x; });
+\end{lstlisting}
+
+\section{Aplicación 15: lower\_bound / upper\_bound en set y multiset}
+Consulta directamente el siguiente o anterior elemento en un conjunto ordenado.
+
+\begin{lstlisting}
+multiset<int> s = {1, 3, 3, 5, 7};
+auto it = s.lower_bound(4);
+cout << *it;
+\end{lstlisting}
+
+\section{Aplicación 16: Búsqueda Binaria Genérica sobre Predicado (Adaptativa)}
+Ejemplo: encontrar la capacidad mínima de un camión que permite transportar todos los paquetes.
+
+\begin{lstlisting}
+auto check = [&](long long capacidad) {
+    // Simular el reparto y devolver true si alcanza.
+    return capacidad >= 100;
+};
+
+long long respuesta =
+    binary_search_first_true(1LL, 1000LL, check);
+\end{lstlisting}
+
+\section{Aplicación 17: Implementación Manual (Referencia Interna)}
+Permite entender o reutilizar la búsqueda binaria sin depender de la STL.
+
+\begin{lstlisting}
+vector<int> a = {1, 3, 5, 8};
+int pos = my_lower_bound(a, 5);
+cout << pos;
+\end{lstlisting}
+
+\section{Aplicación 18: Plantilla Universal de Grafo}
+Ejemplo directo de uso de leerGrafoNoDirigido sobre datos pequeños para ver qué resultado produce.
+
+\begin{lstlisting}
+// Datos de ejemplo
+// leerGrafoNoDirigido(...);
+cout << "Resultado obtenido por leerGrafoNoDirigido";
+\end{lstlisting}
+
+\section{Aplicación 19: BFS (Búsqueda en Anchura)}
+Ejemplo: encontrar el número mínimo de calles que hay que recorrer desde una ciudad.
+
+\begin{lstlisting}
+vector<vector<int>> adj(n + 1);
+bfs(1, n, adj);
+
+cout << dist_[destino];     // cantidad minima de aristas
+vector<int> camino = reconstruirCamino(destino);
+\end{lstlisting}
+
+\section{Aplicación 20: BFS Multi-Fuente}
+Ejemplo: varias estaciones de bomberos atienden simultáneamente a las ciudades más cercanas.
+
+\begin{lstlisting}
+vector<int> estaciones = {1, 5, 8};
+vector<int> dist = bfsMultiFuente(n, adj, estaciones);
+
+cout << dist[10];            // distancia a la estacion mas cercana
+\end{lstlisting}
+
+\section{Aplicación 21: BFS 0/1 (Deque)}
+Ejemplo: moverse por un mapa donde algunas transiciones cuestan 0 y otras cuestan 1.
+
+\begin{lstlisting}
+vector<vector<pair<int,int>>> adjW(n + 1);
+vector<int> dist = bfs01(1, n, adjW);
+
+cout << dist[n];
+\end{lstlisting}
+
+\section{Aplicación 22: DFS (Búsqueda en Profundidad)}
+Ejemplo: recorrer una red y visitar todos los nodos alcanzables desde una ciudad.
+
+\begin{lstlisting}
+visitado.assign(n + 1, false);
+dfs(1, adj);
+
+if (visitado[destino])
+    cout << "Existe camino";
+\end{lstlisting}
+
+\section{Aplicación 23: DFS Iterativo (evita stack overflow)}
+Úsalo cuando el grafo puede tener cientos de miles de nodos y una DFS recursiva podría agotar la pila.
+
+\begin{lstlisting}
+dfsIterativo(1, n, adj);
+// Todos los nodos alcanzables desde 1 quedaron marcados.
+\end{lstlisting}
+
+\section{Aplicación 24: Componentes Conexas y Grafos Bipartitos}
+Ejemplo: contar grupos desconectados y comprobar si se pueden dividir en dos equipos.
+
+\begin{lstlisting}
+vector<int> compId;
+int grupos = contarComponentes(n, adj, compId);
+
+bool dosEquipos = esBipartito(n, adj);
+\end{lstlisting}
+
+\section{Aplicación 25: Grafo NO Dirigido}
+Ejemplo: detectar si una red de carreteras contiene algún ciclo.
+
+\begin{lstlisting}
+bool hayCiclo = tieneCicloNoDirigido(n, adj);
+
+cout << (hayCiclo ? "SI" : "NO");
+\end{lstlisting}
+
+\section{Aplicación 26: Grafo Dirigido (3 colores)}
+Ejemplo: comprobar si las dependencias entre tareas forman un ciclo.
+
+\begin{lstlisting}
+bool hayCiclo = tieneCicloDirigido(n, adj);
+
+cout << (hayCiclo ? "Dependencias invalidas" : "Orden posible");
+\end{lstlisting}
+
+\section{Aplicación 27: Kahn (BFS) --- Recomendado}
+Ejemplo: obtener un orden válido para cursar materias con prerrequisitos.
+
+\begin{lstlisting}
+vector<int> orden = topoSortKahn(n, adj);
+
+if (orden.empty())
+    cout << "Hay un ciclo";
+else
+    for (int materia : orden) cout << materia << ' ';
+\end{lstlisting}
+
+\section{Aplicación 28: DFS (post-orden invertido)}
+Ejemplo: construir un orden topológico cuando ya sabemos que el grafo es acíclico.
+
+\begin{lstlisting}
+vector<int> orden = topoSortDFS(n, adj);
+
+for (int x : orden) cout << x << ' ';
+\end{lstlisting}
+
+\section{Aplicación 29: Dijkstra (pesos no negativos)}
+Ejemplo: encontrar la ruta más barata entre ciudades cuando las carreteras tienen costos no negativos.
+
+\begin{lstlisting}
+vector<ll> dist = dijkstra(1, n, adjW);
+
+cout << dist[n];              // costo minimo desde 1 hasta n
+\end{lstlisting}
+
+\section{Aplicación 30: Bellman-Ford (permite pesos negativos)}
+Ejemplo: calcular rutas cuando existen descuentos que se representan con pesos negativos.
+
+\begin{lstlisting}
+auto [dist, cicloNegativo] =
+    bellmanFord(1, n, edges);
+
+if (cicloNegativo) cout << "Ciclo negativo";
+else cout << dist[n];
+\end{lstlisting}
+
+\section{Aplicación 31: Floyd-Warshall (todos los pares)}
+Ejemplo: obtener la distancia mínima entre cualquier par de ciudades.
+
+\begin{lstlisting}
+floydWarshall(dist, n);
+
+cout << dist[2][5];            // mejor ruta 2 -> 5
+\end{lstlisting}
+
+\section{Aplicación 32: Kruskal (recomendado, más fácil de codear)}
+Ejemplo: conectar todas las ciudades gastando el mínimo posible en carreteras.
+
+\begin{lstlisting}
+sort(edges.begin(), edges.end());
+ll costo = kruskal(n, edges);
+
+cout << costo;
+\end{lstlisting}
+
+\section{Aplicación 33: Prim (mejor para grafos densos)}
+Ejemplo: construir una red mínima de cables conectando todos los edificios.
+
+\begin{lstlisting}
+ll costo = prim(n, adjW);
+cout << costo;
+\end{lstlisting}
+
+\section{Aplicación 34: Componentes Fuertemente Conexas: Tarjan}
+Ejemplo: encontrar grupos de páginas web donde cada página puede llegar a las demás.
+
+\begin{lstlisting}
+tarjanSCC(n);
+
+cout << "La pagina 3 pertenece a SCC "
+     << comp[3];
+\end{lstlisting}
+
+\section{Aplicación 35: Puentes y Puntos de Articulación}
+Ejemplo: detectar carreteras críticas cuya eliminación desconecta una red.
+
+\begin{lstlisting}
+encontrarPuentesYArticulacion(n);
+
+for (auto [u, v] : puentes)
+    cout << u << " - " << v << '\\n';
+\end{lstlisting}
+
+\section{Aplicación 36: Ancestro Común Más Bajo (LCA) --- Binary Lifting}
+Ejemplo: encontrar el ancestro común de dos empleados en un árbol jerárquico.
+
+\begin{lstlisting}
+lcaInit(n, 1);
+
+int jefeComun = lcaQuery(12, 19);
+cout << jefeComun;
+\end{lstlisting}
+
+\section{Aplicación 37: 2-SAT}
+Ejemplo: elegir valores booleanos que satisfagan restricciones como (A o B).
+
+\begin{lstlisting}
+TwoSAT sat(3);
+
+sat.addClause(0, true, 1, false);
+sat.addClause(1, true, 2, true);
+
+if (sat.solve())
+    cout << "Existe una asignacion";
+else
+    cout << "No existe";
+\end{lstlisting}
+
+\section{Aplicación 38: Flujo Máximo: Edmonds-Karp}
+Ejemplo: calcular cuántas unidades de agua pueden enviarse desde una fuente hasta un destino.
+
+\begin{lstlisting}
+int maxFlow = edmondsKarp(origen, destino);
+cout << maxFlow;
+\end{lstlisting}
+
+\section{Aplicación 39: Grafos Implícitos en Grid/Matriz}
+Ejemplo: encontrar la distancia mínima entre dos casillas de un laberinto.
+
+\begin{lstlisting}
+grid = {
+    "...#",
+    "....",
+    "#..."
+};
+R = grid.size();
+C = grid[0].size();
+
+bfsGrid(0, 0);
+cout << distGrid[2][3];
+\end{lstlisting}
+
+\section{Aplicación 40: KMP (Knuth-Morris-Pratt)}
+Ejemplo: encontrar todas las posiciones donde aparece una palabra dentro de un texto.
+
+\begin{lstlisting}
+string texto = "abracadabra";
+string patron = "abra";
+
+vector<int> posiciones = kmp_search(texto, patron);
+// posiciones = {0, 7}
+\end{lstlisting}
+
+\section{Aplicación 41: Z-Function}
+Ejemplo: comparar rápidamente cada sufijo con el prefijo de una cadena.
+
+\begin{lstlisting}
+string s = "aaaaab";
+vector<int> z = z_function(s);
+
+cout << z[1];
+\end{lstlisting}
+
+\section{Aplicación 42: Hashing de Strings (Polinomial)}
+Ejemplo: comparar rápidamente dos subcadenas para detectar si tienen el mismo hash.
+
+\begin{lstlisting}
+StringHash h("programacion");
+
+ll a = h.getHash(0, 3);
+ll b = h.getHash(4, 7);
+
+cout << (a == b);
+\end{lstlisting}
+
+\section{Aplicación 43: Manacher (Palíndromos)}
+Ejemplo: encontrar el palíndromo más largo de una palabra.
+
+\begin{lstlisting}
+string s = "abacaba";
+vector<int> radio = manacher(s);
+
+int mejor = 0;
+for (int r : radio) mejor = max(mejor, r - 1);
+cout << mejor;
+\end{lstlisting}
+
+\section{Aplicación 44: Boyer-Moore (Búsqueda de Patrones)}
+Ejemplo: buscar una palabra dentro de un texto usando saltos grandes cuando hay coincidencias parciales.
+
+\begin{lstlisting}
+string texto = "abracadabra";
+string patron = "cad";
+
+vector<int> posiciones =
+    boyer_moore_search(texto, patron);
+\end{lstlisting}
+
+\section{Aplicación 45: Boyer-Moore (Búsqueda de Patrones) (ejemplo 2)}
+Ejemplo directo de uso de mayoritario sobre datos pequeños para ver qué resultado produce.
+
+\begin{lstlisting}
+// Datos de ejemplo
+// mayoritario(...);
+cout << "Resultado obtenido por mayoritario";
+\end{lstlisting}
+
+\section{Aplicación 46: Plantilla General de DP (Top-Down / Memoización)}
+Ejemplo: contar cuántos caminos existen en una cuadrícula moviéndose solo derecha/abajo.
+
+\begin{lstlisting}
+memset(visitadoDp, 0, sizeof(visitadoDp));
+
+cout << solve(3, 4);           // cantidad de caminos
+\end{lstlisting}
+
+\section{Aplicación 47: Versión con Arreglo}
+Ejemplo: calcular Fibonacci cuando el máximo N se conoce y cabe en un arreglo.
+
+\begin{lstlisting}
+int n = 40;
+cout << fibonacci_memo(n);
+\end{lstlisting}
+
+\section{Aplicación 48: Versión con unordered\_map}
+Ejemplo directo de uso de fibonacci\_memo\_map sobre datos pequeños para ver qué resultado produce.
+
+\begin{lstlisting}
+// Datos de ejemplo
+// fibonacci_memo_map(...);
+cout << "Resultado obtenido por fibonacci_memo_map";
+\end{lstlisting}
+
+\section{Aplicación 49: Fast Doubling con Memoización}
+Ejemplo: calcular Fibonacci para valores gigantes en O(log N).
+
+\begin{lstlisting}
+memoFastDouble.clear();
+cout << fibonacci_fast_doubling(1000000000000LL);
+\end{lstlisting}
+
+\section{Aplicación 50: Mochila 0-1 (0-1 Knapsack)}
+Ejemplo: elegir objetos de mayor valor sin superar el peso máximo de una mochila.
+
+\begin{lstlisting}
+vector<int> peso = {2, 3, 4};
+vector<int> valor = {4, 5, 7};
+
+cout << knapsack(5, peso, valor, peso.size());
+\end{lstlisting}
+
+\section{Aplicación 51: Longest Common Subsequence (LCS)}
+Ejemplo: medir cuánto contenido mantienen en común dos secuencias.
+
+\begin{lstlisting}
+cout << lcs("ABCBDAB", "BDCABA");
+\end{lstlisting}
+
+\section{Aplicación 52: Longest Increasing Subsequence (LIS)}
+Ejemplo: encontrar la mayor secuencia de precios que crece estrictamente.
+
+\begin{lstlisting}
+vector<int> precios = {10, 5, 8, 12, 3, 15};
+cout << lis(precios);
+\end{lstlisting}
+
+\section{Aplicación 53: DP con Máscaras de Bits (Bitmask DP - TSP)}
+Ejemplo: encontrar la ruta mínima que visita todas las ciudades y regresa al inicio.
+
+\begin{lstlisting}
+memset(dp, -1, sizeof(dp));
+cout << tsp(1, 0);            // empieza en la ciudad 0
+\end{lstlisting}
+
+\section{Aplicación 54: DP en Árboles (Tree DP)}
+Ejemplo: escoger un conjunto de empleados sin seleccionar simultáneamente a un jefe y su subordinado directo.
+
+\begin{lstlisting}
+tree_dp(1, -1);
+cout << max(dpIncluye[1], dpExcluye[1]);
+\end{lstlisting}
+
+\section{Aplicación 55: Operaciones Básicas y Trucos Fundamentales}
+Ejemplo: representar permisos de usuario usando bits.
+
+\begin{lstlisting}
+int permisos = 0;
+permisos |= (1 << 2);          // activar permiso 2
+bool puedeEditar = (permisos >> 2) & 1;
+\end{lstlisting}
+
+\section{Aplicación 56: Conteo de Bits (Popcount)}
+Ejemplo: contar cuántos permisos están activos en una máscara.
+
+\begin{lstlisting}
+int permisos = 42;
+cout << __builtin_popcount(permisos);
+\end{lstlisting}
+
+\section{Aplicación 57: Conteo de Bits (Popcount) (ejemplo 2)}
+Ejemplo directo de uso de popcount\_table sobre datos pequeños para ver qué resultado produce.
+
+\begin{lstlisting}
+auto cnt = popcount_table(20);
+cout << cnt[13];
+\end{lstlisting}
+
+\section{Aplicación 58: Suma y Resta Binaria (Bit a Bit)}
+Ejemplo: realizar una suma sin utilizar directamente el operador +.
+
+\begin{lstlisting}
+cout << suma_bitwise(13, 29);
+cout << resta_bitwise(29, 13);
+\end{lstlisting}
+
+\section{Aplicación 59: Multiplicación Binaria (Russian Peasant / Egyptian Multiplication)}
+Ejemplo: multiplicar bajo un módulo muy grande evitando un producto directo peligroso.
+
+\begin{lstlisting}
+cout << mulmod_binario(123456789LL,
+                         987654321LL,
+                         1000000000000000003LL);
+\end{lstlisting}
+
+\section{Aplicación 60: Enumeración de Submáscaras (Submask Enumeration)}
+Ejemplo: probar todos los subconjuntos de un conjunto de habilidades representado por una máscara.
+
+\begin{lstlisting}
+int habilidades = 0b1111;
+
+for (int sub = habilidades; ; sub = (sub - 1) & habilidades) {
+    cout << sub << '\\n';
+    if (sub == 0) break;
+}
+\end{lstlisting}
+
+\section{Aplicación 61: Propiedades y Trucos con XOR}
+Ejemplo: encontrar el número que aparece una sola vez cuando todos los demás aparecen dos veces.
+
+\begin{lstlisting}
+vector<int> a = {4, 7, 2, 7, 4};
+cout << unico_no_repetido(a);   // 2
+\end{lstlisting}
+
+\section{Aplicación 62: std::bitset: Uso y Conversión}
+Ejemplo: representar un conjunto pequeño de opciones y hacer operaciones masivas sobre sus bits.
+
+\begin{lstlisting}
+bitset<8> permisos("10110010");
+
+cout << permisos.count();
+permisos.set(0);
+permisos.reset(4);
+\end{lstlisting}
+
+\section{Aplicación 63: std::bitset: Uso y Conversión (ejemplo 2)}
+Consulta directamente el siguiente o anterior elemento en un conjunto ordenado.
+
+\begin{lstlisting}
+multiset<int> s = {1, 3, 3, 5, 7};
+auto it = s.lower_bound(4);
+cout << *it;
+\end{lstlisting}
+
+\section{Aplicación 64: Casos de Uso de Bitmasking}
+Ejemplo: subset sum acelerado: saber qué sumas pueden conseguirse con un conjunto de números.
+
+\begin{lstlisting}
+vector<int> pesos = {3, 5, 7};
+auto alcanzables = subset_sum_alcanzable(pesos);
+
+cout << alcanzables[10];
+\end{lstlisting}
+
+\section{Aplicación 65: Casos de Uso de Bitmasking (ejemplo 2)}
+Ejemplo directo de uso de dp sobre datos pequeños para ver qué resultado produce.
+
+\begin{lstlisting}
+// Datos de ejemplo
+// dp(...);
+cout << "Resultado obtenido por dp";
+\end{lstlisting}
+
+\section{Aplicación 66: Casos de Uso de Bitmasking (ejemplo 3)}
+Ejemplo directo de uso de subset\_sum\_alcanzable sobre datos pequeños para ver qué resultado produce.
+
+\begin{lstlisting}
+// Datos de ejemplo
+// subset_sum_alcanzable(...);
+cout << "Resultado obtenido por subset_sum_alcanzable";
+\end{lstlisting}
+
+\section{Aplicación 67: Casos de Uso de Bitmasking (ejemplo 4)}
+Ejemplo directo de uso de DP sobre datos pequeños para ver qué resultado produce.
+
+\begin{lstlisting}
+// Datos de ejemplo
+// DP(...);
+cout << "Resultado obtenido por DP";
+\end{lstlisting}
+
+\section{Aplicación 68: MCD (Máximo Común Divisor) y MCM (Mínimo Común Múltiplo)}
+Ejemplo: sincronizar dos eventos que se repiten cada a y b segundos.
+
+\begin{lstlisting}
+ll a = 12, b = 18;
+
+cout << gcd(a, b);   // 6
+cout << lcm(a, b);   // 36
+\end{lstlisting}
+
+\section{Aplicación 69: Algoritmo de Euclides Extendido}
+Ejemplo: encontrar el inverso modular de a cuando gcd(a,m)=1.
+
+\begin{lstlisting}
+ll x, y;
+ll g = extgcd(3, 11, x, y);
+
+if (g == 1) {
+    x = (x % 11 + 11) % 11;
+    cout << x;       // 4
+}
+\end{lstlisting}
+
+\section{Aplicación 70: Criba de Eratóstenes (Sieve)}
+Ejemplo: precalcular primos y después factorizar muchos números rápidamente.
+
+\begin{lstlisting}
+sieve();
+
+vector<int> factores = factorizar(360);
+// 2 2 2 3 3 5
+\end{lstlisting}
+
+\section{Aplicación 71: Exponenciación Rápida (Fast/Modular Power)}
+Ejemplo: calcular una potencia enorme módulo MOD.
+
+\begin{lstlisting}
+cout << modpow(2, 1000000000LL, 1000000007LL);
+\end{lstlisting}
+
+\section{Aplicación 72: Inverso Multiplicativo Modular}
+Ejemplo: dividir bajo módulo primo usando el inverso modular.
+
+\begin{lstlisting}
+ll a = 3;
+ll inv = inv_mod(a);
+
+cout << inv;            // 333333336 para MOD = 1e9+7
+\end{lstlisting}
+
+\section{Aplicación 73: Combinatoria: Factoriales y nCr con Módulo}
+Ejemplo: contar cuántas formas hay de elegir r personas de n.
+
+\begin{lstlisting}
+precalc_factoriales();
+cout << nCr(10, 3);      // 120
+\end{lstlisting}
+
+\section{Aplicación 74: Test de Primalidad Miller-Rabin}
+Ejemplo: comprobar rápidamente si un número grande es primo.
+
+\begin{lstlisting}
+ll n = 1000000007LL;
+cout << (miller_rabin(n) ? "Primo" : "Compuesto");
+\end{lstlisting}
+
+\section{Aplicación 75: Teorema Chino del Resto (CRT) --- Implementación}
+Ejemplo: encontrar un número que cumpla simultáneamente varios restos.
+
+\begin{lstlisting}
+vector<ll> r = {2, 3};
+vector<ll> m = {3, 5};
+ll resR, resM;
+
+if (crt(r, m, resR, resM))
+    cout << resR;       // 8
+\end{lstlisting}
+
+\section{Aplicación 76: Función de Möbius}
+Ejemplo: precalcular mu(n) para técnicas de inclusión-exclusión sobre divisores.
+
+\begin{lstlisting}
+calcular_mobius();
+
+cout << mu[6];          // 1, porque 6 = 2 * 3
+\end{lstlisting}
+
+\section{Aplicación 77: Fórmula de Legendre (Exponente de un Primo en $N!$)}
+Ejemplo: saber cuántas veces aparece el factor 2 dentro de 100!.
+
+\begin{lstlisting}
+cout << legendre_exponente(100, 2);
+\end{lstlisting}
+
+\section{Aplicación 78: Primitivas Básicas: Punto, Producto Cruz y Punto}
+Ejemplo: saber si tres puntos forman un giro a la izquierda o a la derecha.
+
+\begin{lstlisting}
+Point A{0, 0}, B{2, 0}, C{1, 3};
+
+double area2 = cross(A, B, C);
+// area2 > 0: C esta a la izquierda de A->B
+\end{lstlisting}
+
+\section{Aplicación 79: Envolvente Convexa (Convex Hull - Andrew Monotone Chain)}
+Ejemplo: encontrar el contorno exterior de un conjunto de puntos GPS.
+
+\begin{lstlisting}
+vector<Point> puntos = {
+    {0,0}, {2,0}, {1,1}, {0,2}, {2,2}
+};
+
+vector<Point> borde = convex_hull(puntos);
+\end{lstlisting}
+
+\section{Aplicación 80: Área y Punto Dentro de Polígono}
+Ejemplo: calcular el área de una parcela y comprobar si una coordenada cae dentro.
+
+\begin{lstlisting}
+vector<Point> parcela = {
+    {0,0}, {4,0}, {4,3}, {0,3}
+};
+
+cout << poly_area(parcela);
+cout << point_in_polygon({2,1}, parcela);
+\end{lstlisting}
+
+\section{Aplicación 81: Intersección de Segmentos}
+Ejemplo: comprobar si dos carreteras se cruzan.
+
+\begin{lstlisting}
+Point a{0,0}, b{4,4};
+Point c{0,4}, d{4,0};
+
+cout << segments_intersect(a, b, c, d);
+\end{lstlisting}
+
+\section{Aplicación 82: Punto de Intersección de Dos Rectas}
+Ejemplo: encontrar exactamente dónde se cruzan dos trayectorias.
+
+\begin{lstlisting}
+Point out;
+bool ok = line_intersection(
+    {0,0}, {4,4},
+    {0,4}, {4,0},
+    out
+);
+
+if (ok) cout << out.x << ' ' << out.y;
+\end{lstlisting}
+
+\section{Aplicación 83: Distancia Punto-Recta y Punto-Segmento}
+Ejemplo: calcular qué tan cerca está una persona de una carretera.
+
+\begin{lstlisting}
+Point persona{2, 3};
+Point A{0,0}, B{5,0};
+
+cout << dist_point_line(persona, A, B);
+cout << dist_point_segment(persona, A, B);
+\end{lstlisting}
+
+\section{Aplicación 84: Círculos: Pertenencia e Intersección}
+Ejemplo: comprobar si una ubicación está dentro de una zona de cobertura y si dos coberturas se intersectan.
+
+\begin{lstlisting}
+Circle a{{0,0}, 5};
+Circle b{{6,0}, 4};
+
+cout << point_in_circle({3,0}, a);
+
+auto cortes = circle_circle_intersection(a, b);
+\end{lstlisting}
+
+\section{Aplicación 85: Par de Puntos Más Cercano (Closest Pair)}
+Ejemplo: encontrar las dos antenas más cercanas entre muchas antenas.
+
+\begin{lstlisting}
+vector<Point> antenas = {
+    {0,0}, {10,10}, {1,1}, {20,3}
+};
+
+cout << closest_pair(antenas);
+\end{lstlisting}
+
+\section{Aplicación 86: Rotating Calipers: Diámetro de un Conjunto de Puntos}
+Ejemplo: encontrar la máxima distancia entre dos puntos de una ciudad.
+
+\begin{lstlisting}
+vector<Point> puntos = {
+    {0,0}, {4,0}, {4,3}, {0,3}
+};
+
+cout << poly_diameter(puntos);
+\end{lstlisting}
+
+\section{Aplicación 87: Ordenamiento Angular (Radial Sort) y Convexidad}
+Ejemplo: ordenar puntos alrededor de una antena para procesarlos en sentido angular.
+
+\begin{lstlisting}
+Point centro{0,0};
+vector<Point> puntos = {
+    {1,0}, {0,1}, {-1,0}, {0,-1}
+};
+
+sort_by_angle(puntos, centro);
+cout << is_convex_polygon(puntos);
+\end{lstlisting}
+
+\section{Aplicación 88: Interpolación de Hermite (Cúbica)}
+Ejemplo: generar una posición suave entre dos puntos con velocidades inicial y final conocidas.
+
+\begin{lstlisting}
+Point p0{0,0}, p1{10,5};
+Point m0{5,0}, m1{5,5};
+
+Point p = hermite_interp(p0, m0, p1, m1, 0.5);
+\end{lstlisting}
+
+\section{Aplicación 89: Interpolación de Hermite (Cúbica) (ejemplo 2)}
+Ejemplo directo de uso de catmull\_rom\_tangents sobre datos pequeños para ver qué resultado produce.
+
+\begin{lstlisting}
+// Datos de ejemplo
+// catmull_rom_tangents(...);
+cout << "Resultado obtenido por catmull_rom_tangents";
+\end{lstlisting}
+
+\section{Aplicación 90: Spline Cúbico Natural}
+Ejemplo: interpolar suavemente una serie de mediciones sin forzar cambios bruscos de pendiente.
+
+\begin{lstlisting}
+CubicSpline spline;
+spline.build(x, y);
+
+double estimado = spline.eval(2.5);
+\end{lstlisting}
+
+\section{Aplicación 91: Sumas y Series}
+Ejemplo: calcular una suma hasta N sin recorrer todos los números.
+
+\begin{lstlisting}
+ll n = 1000000;
+cout << suma_naturales(n);
+cout << suma_impares(n);
+\end{lstlisting}
+
+\section{Aplicación 92: Combinatoria}
+Ejemplo: contar permutaciones y combinaciones usando factoriales precalculados.
+
+\begin{lstlisting}
+precalc_factoriales();
+
+cout << nPr(10, 3);
+cout << nCr(10, 3);
+\end{lstlisting}
+
+\section{Aplicación 93: Geometría}
+Ejemplo: calcular el área de un triángulo a partir de sus lados o coordenadas.
+
+\begin{lstlisting}
+cout << area_triangulo_heron(3, 4, 5);
+
+cout << area_triangulo_coords(
+    {0,0}, {4,0}, {0,3}
+);
+\end{lstlisting}
+
+\section{Aplicación 94: Probabilidad y Recurrencias}
+Ejemplo: calcular la esperanza y varianza de la suma de variables aleatorias independientes.
+
+\begin{lstlisting}
+cout << esperanza_suma(valores);
+cout << varianza(valores);
+\end{lstlisting}
+
+\section{Aplicación 95: Teorema Maestro (guía de referencia, no se codea)}
+Ejemplo directo de uso de rapida sobre datos pequeños para ver qué resultado produce.
+
+\begin{lstlisting}
+// Datos de ejemplo
+// rapida(...);
+cout << "Resultado obtenido por rapida";
+\end{lstlisting}
+
+\section{Aplicación 96: Matrioshka}
+Ejemplo: resolver el problema completo: comprobar si una secuencia de tamaños puede formar muñecas anidadas válidas.
+
+\begin{lstlisting}
+int n;
+cin >> n;
+
+vector<int> cajas(n);
+for (int &x : cajas) cin >> x;
+
+// El programa de la seccion aplica la pila
+// para verificar si todas las Matrioshkas son validas.
+\end{lstlisting}
+
+\end{document}
